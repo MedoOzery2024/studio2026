@@ -1,5 +1,8 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BrainCircuit } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -22,6 +25,22 @@ export default function Home() {
         >
           <Clock />
           <DateDisplay />
+          <Link href="/expert-assistant" className="sm:col-span-2">
+            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  مساعد الخبراء بالذكاء الاصطناعي
+                </CardTitle>
+                <BrainCircuit className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-bold">Mahmoud.AI Expert Assistant</p>
+                <p className="text-sm text-muted-foreground">
+                  طرح الأسئلة، والحصول على شروح، وتوليد الأفكار.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
     </main>
