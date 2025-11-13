@@ -8,9 +8,8 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {generate} from 'genkit/generate';
+import {generate, Message, Role} from 'genkit';
 import {z} from 'genkit';
-import {Message, Role} from 'genkit/generate';
 
 const ChatInputSchema = z.object({
   history: z.array(z.object({
