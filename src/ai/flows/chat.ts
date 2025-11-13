@@ -8,7 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {generate, Message, Role} from 'genkit';
+import { Message, Role} from 'genkit';
 import {z} from 'genkit';
 
 const ChatInputSchema = z.object({
@@ -41,7 +41,7 @@ const chatFlow = ai.defineFlow(
   },
   async (input) => {
     const history = toGenkitMessages(input.history);
-    const response = await generate({
+    const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       prompt: input.prompt,
       history,
