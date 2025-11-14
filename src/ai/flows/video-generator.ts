@@ -30,16 +30,6 @@ export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 
 
 export async function generateVideo(input: GenerateVideoInput): Promise<GenerateVideoOutput> {
-  return generateVideoFlow(input);
-}
-
-const generateVideoFlow = ai.defineFlow(
-  {
-    name: 'generateVideoFlow',
-    inputSchema: GenerateVideoInputSchema,
-    outputSchema: GenerateVideoOutputSchema,
-  },
-  async (input) => {
     const { prompt, fileDataUri, durationSeconds, aspectRatio } = input;
     
     // Determine the prompt parts
@@ -114,5 +104,4 @@ const generateVideoFlow = ai.defineFlow(
     return {
         videoUrl: `data:video/mp4;base64,${base64Video}`,
     };
-  }
-);
+}

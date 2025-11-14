@@ -25,10 +25,6 @@ export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 export type ChatOutput = string;
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
-}
-
 function toGenkitMessages(history: ChatInput['history']): Message[] {
     return history.map(msg => ({
         role: msg.role as Role,
@@ -36,13 +32,8 @@ function toGenkitMessages(history: ChatInput['history']): Message[] {
     }));
 }
 
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: z.string(),
-  },
-  async (input) => {
+
+export async function chat(input: ChatInput): Promise<ChatOutput> {
     const history = toGenkitMessages(input.history);
     
     // Construct the prompt, including the file if it exists
@@ -68,5 +59,4 @@ If a file is provided, your response must be based on its content.`
     });
 
     return response.text;
-  }
-);
+}

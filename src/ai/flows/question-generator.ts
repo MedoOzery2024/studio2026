@@ -18,7 +18,7 @@ const QuestionSchema = z.object({
   explanation: z.string().describe('An explanation for why the answer is correct.'),
 });
 
-const GenerateQuestionsInputSchema = z.object({
+export const GenerateQuestionsInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
   ),
@@ -28,7 +28,7 @@ const GenerateQuestionsInputSchema = z.object({
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
-const GenerateQuestionsOutputSchema = z.object({
+export const GenerateQuestionsOutputSchema = z.object({
   questions: z.array(QuestionSchema).describe('The array of generated questions.'),
 });
 export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;

@@ -35,16 +35,6 @@ export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
 
 
 export async function generateMindMap(input: GenerateMindMapInput): Promise<GenerateMindMapOutput> {
-  return generateMindMapFlow(input);
-}
-
-const generateMindMapFlow = ai.defineFlow(
-  {
-    name: 'generateMindMapFlow',
-    inputSchema: GenerateMindMapInputSchema,
-    outputSchema: GenerateMindMapOutputSchema,
-  },
-  async (input) => {
     const { fileDataUri } = input;
     
     const prompt = `Analyze the provided content and generate a hierarchical mind map structure.
@@ -70,5 +60,4 @@ Content to analyze:
       throw new Error("The AI failed to generate a mind map structure.");
     }
     return output;
-  }
-);
+}

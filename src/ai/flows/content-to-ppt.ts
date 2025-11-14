@@ -29,16 +29,6 @@ export const GeneratePresentationOutputSchema = z.object({
 export type GeneratePresentationOutput = z.infer<typeof GeneratePresentationOutputSchema>;
 
 export async function generatePresentation(input: GeneratePresentationInput): Promise<GeneratePresentationOutput> {
-  return generatePresentationFlow(input);
-}
-
-const generatePresentationFlow = ai.defineFlow(
-  {
-    name: 'generatePresentationFlow',
-    inputSchema: GeneratePresentationInputSchema,
-    outputSchema: GeneratePresentationOutputSchema,
-  },
-  async (input) => {
     const { fileDataUri } = input;
     
     const prompt = `Analyze the provided content and generate a structured presentation.
@@ -65,5 +55,4 @@ Content to analyze:
       throw new Error("The AI failed to generate a presentation structure.");
     }
     return output;
-  }
-);
+}

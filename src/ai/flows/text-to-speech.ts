@@ -54,16 +54,6 @@ async function toWav(
 
 
 export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
-  return textToSpeechFlow(input);
-}
-
-const textToSpeechFlow = ai.defineFlow(
-  {
-    name: 'textToSpeechFlow',
-    inputSchema: TextToSpeechInputSchema,
-    outputSchema: TextToSpeechOutputSchema,
-  },
-  async (input) => {
     // 1. Extract text from the document
     const { fileDataUri, voice } = input;
     const textResponse = await ai.generate({
@@ -114,5 +104,4 @@ const textToSpeechFlow = ai.defineFlow(
     return {
       audioDataUri: 'data:audio/wav;base64,' + wavBase64,
     };
-  }
-);
+}

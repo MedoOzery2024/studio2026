@@ -31,17 +31,6 @@ export type AnalyzeChartOutput = z.infer<typeof AnalyzeChartOutputSchema>;
 
 
 export async function analyzeChart(input: AnalyzeChartInput): Promise<AnalyzeChartOutput> {
-  return analyzeChartFlow(input);
-}
-
-
-const analyzeChartFlow = ai.defineFlow(
-  {
-    name: 'analyzeChartFlow',
-    inputSchema: AnalyzeChartInputSchema,
-    outputSchema: AnalyzeChartOutputSchema,
-  },
-  async (input) => {
     const { fileDataUri } = input;
 
     const prompt = `You are an expert data analyst. Analyze the chart provided in the content.
@@ -67,5 +56,4 @@ Content to analyze:
       throw new Error("The AI failed to analyze the chart.");
     }
     return output;
-  }
-);
+}

@@ -25,16 +25,6 @@ export const SpeechToTextAndSummarizeOutputSchema = z.object({
 export type SpeechToTextAndSummarizeOutput = z.infer<typeof SpeechToTextAndSummarizeOutputSchema>;
 
 export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeInput): Promise<SpeechToTextAndSummarizeOutput> {
-  return speechToTextFlow(input);
-}
-
-const speechToTextFlow = ai.defineFlow(
-  {
-    name: 'speechToTextFlow',
-    inputSchema: SpeechToTextAndSummarizeInputSchema,
-    outputSchema: SpeechToTextAndSummarizeOutputSchema,
-  },
-  async (input) => {
     let transcription = input.existingText || '';
 
     if (input.audioDataUri) {
@@ -61,5 +51,4 @@ const speechToTextFlow = ai.defineFlow(
     const summary = summarizeResponse.text;
 
     return { transcription, summary };
-  }
-);
+}
