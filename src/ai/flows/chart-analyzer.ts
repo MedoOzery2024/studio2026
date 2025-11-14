@@ -10,15 +10,14 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+export type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
 const AnalyzeChartInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) containing a chart, as a data URI."
   ),
 });
-export type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
 
 const TableRowSchema = z.array(z.string());
-
 const AnalyzeChartOutputSchema = z.object({
     title: z.string().describe("The title of the chart."),
     summary: z.string().describe("A detailed summary and interpretation of the chart's data and trends. This must be in the same language as the chart itself (e.g., Arabic or English)."),
