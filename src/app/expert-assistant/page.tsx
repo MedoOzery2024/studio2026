@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Paperclip, Send, User, Bot, CornerDownLeft } from 'lucide-react';
+import { Paperclip, Send, User, Bot, CornerDownLeft, File as FileIcon, X } from 'lucide-react';
 import { chat, ChatInput } from '@/ai/flows/chat';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 type Message = {
   id: number;
@@ -19,19 +20,40 @@ export default function ExpertAssistantPage() {
     {
       id: 1,
       sender: 'ai',
-      text: 'مرحباً! أنا مساعد محمود الذكي. كيف يمكنني مساعدتك اليوم؟',
+      text: 'مرحباً! أنا مساعد محمود الذكي. يمكنك الآن رفع الملفات لتحليلها. كيف يمكنني مساعدتك اليوم؟',
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const selectedFile = event.target.files[0];
+      setFile(selectedFile);
+    }
+  };
+  
+  const removeFile = () => {
+    setFile(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  };
 
   const handleSend = async () => {
-    if (input.trim() === '' || isLoading) return;
+    if ((input.trim() === '' && !file) || isLoading) return;
 
     const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     const currentInput = input;
+    const currentFile = file;
     setInput('');
+    setFile(null);
+    if(fileInputRef.current) fileInputRef.current.value = '';
+
     setIsLoading(true);
 
     try {
@@ -40,9 +62,20 @@ export default function ExpertAssistantPage() {
         content: msg.text,
       }));
 
+      let fileDataUri: string | undefined = undefined;
+      if (currentFile) {
+        fileDataUri = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(currentFile);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
       const aiResponseText = await chat({
         history: history,
         prompt: currentInput,
+        fileDataUri: fileDataUri,
       });
 
       const aiMessage: Message = { id: Date.now() + 1, sender: 'ai', text: aiResponseText };
@@ -132,8 +165,21 @@ export default function ExpertAssistantPage() {
           )}
         </div>
       </main>
-      <footer className="border-t border-white/10 p-4 shrink-0">
+      <footer className="border-t border-white/10 p-4 shrink-0 bg-background">
         <div className="relative max-w-3xl mx-auto">
+           {file && (
+            <div className="absolute bottom-full mb-2 w-full">
+                <div className="bg-muted p-2 rounded-md flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 truncate">
+                        <FileIcon className="h-5 w-5 text-muted-foreground" />
+                        <span className="truncate">{file.name}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+          )}
           <Input
             placeholder="اكتب رسالتك هنا..."
             className="h-12 pr-28 pl-4 bg-muted/50 border-border focus-visible:ring-primary"
@@ -143,10 +189,17 @@ export default function ExpertAssistantPage() {
             disabled={isLoading}
           />
           <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
-            <Button size="icon" onClick={handleSend} disabled={!input.trim() || isLoading}>
+            <Input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={isLoading}
+              />
+            <Button size="icon" onClick={handleSend} disabled={(!input.trim() && !file) || isLoading}>
               <Send className="h-5 w-5" />
             </Button>
           </div>

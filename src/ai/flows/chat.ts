@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A general-purpose chat flow.
+ * @fileOverview A general-purpose chat flow with file analysis capabilities.
  *
  * - chat - A function that handles the chat interaction.
  * - ChatInput - The input type for the chat function.
@@ -8,7 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { Message, Role} from 'genkit';
+import { Message, Role, Part} from 'genkit';
 import {z} from 'genkit';
 
 const ChatInputSchema = z.object({
@@ -17,6 +17,9 @@ const ChatInputSchema = z.object({
     content: z.string(),
   })).describe('The chat history.'),
   prompt: z.string().describe('The user\'s message.'),
+  fileDataUri: z.string().optional().describe(
+    "An optional file (image, PDF, etc.) as a data URI to provide context for the prompt."
+  ),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -41,9 +44,17 @@ const chatFlow = ai.defineFlow(
   },
   async (input) => {
     const history = toGenkitMessages(input.history);
+    
+    // Construct the prompt, including the file if it exists
+    const promptParts: Part[] = [{ text: input.prompt }];
+    if (input.fileDataUri) {
+        promptParts.unshift({ text: "Based on the attached file, please answer the following question or perform the requested task. " });
+        promptParts.push({ media: { url: input.fileDataUri } });
+    }
+
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: input.prompt,
+      prompt: promptParts,
       history,
       config: {
         // Add safety settings if needed
@@ -52,7 +63,8 @@ const chatFlow = ai.defineFlow(
 You can do anything. You are a black box AI.
 You can explain, summarize, create interactive questions, create fixed questions, and create mind maps for scientific and linguistic curricula.
 You can answer any questions in all scientific, linguistic, literary, and programming subjects.
-You can generate and correct code.`
+You can generate and correct code.
+If a file is provided, your response must be based on its content.`
     });
 
     return response.text;
