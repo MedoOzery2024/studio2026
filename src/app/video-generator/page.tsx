@@ -11,12 +11,13 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, Video, Loader2, AlertCircle, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { Upload, FileUp, Settings, Video, Loader2, AlertCircle, Download } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Slider } from '@/components/ui/slider';
+import { generateVideo, GenerateVideoInput } from '@/ai/flows/video-generator';
 
 
 export default function VideoGeneratorPage() {
@@ -69,22 +70,49 @@ export default function VideoGeneratorPage() {
 
     toast({
         title: 'بدء إنشاء الفيديو',
-        description: 'قد تستغرق هذه العملية عدة دقائق. يرجى الانتظار.'
+        description: 'قد تستغرق هذه العملية عدة دقائق. يرجى الانتظار بصبر.'
     });
 
-    // Placeholder for AI logic
-    setTimeout(() => {
-        // This is a placeholder. In a real scenario, you would get the video URL from the AI flow.
-        const fakeVideoUrl = 'https://placehold.co/1280x720.mp4?text=Generated+Video';
-        setGeneratedVideo(fakeVideoUrl);
-        setIsGenerating(false);
-        setError('هذه الميزة قيد التطوير. الفيديو المعروض هو مثال.');
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+            const base64Data = reader.result as string;
+
+            const input: GenerateVideoInput = {
+                prompt,
+                fileDataUri: base64Data,
+                durationSeconds: duration[0],
+                aspectRatio,
+            };
+
+            const result = await generateVideo(input);
+            if (result && result.videoUrl) {
+                setGeneratedVideo(result.videoUrl);
+                toast({
+                    title: 'اكتمل إنشاء الفيديو بنجاح!',
+                    description: 'الفيديو جاهز للعرض أدناه.'
+                });
+            } else {
+                throw new Error('فشل إنشاء الفيديو. لم يتم إرجاع أي فيديو.');
+            }
+        };
+        reader.onerror = () => {
+            throw new Error('فشل في قراءة الملف.');
+        }
+
+    } catch (e: any) {
+        console.error("Error generating video:", e);
+        const errorMessage = e.message || 'حدث خطأ غير متوقع أثناء إنشاء الفيديو.';
+        setError(errorMessage);
         toast({
-            variant: 'default',
-            title: 'اكتمل الإنشاء (مثال)',
-            description: 'الفيديو جاهز للعرض أدناه.'
+            variant: 'destructive',
+            title: 'فشل إنشاء الفيديو',
+            description: errorMessage,
         });
-    }, 10000);
+    } finally {
+        setIsGenerating(false);
+    }
   };
   
   return (
@@ -185,7 +213,7 @@ export default function VideoGeneratorPage() {
                 </div>
             </CardContent>
             <CardFooter>
-               <Button size="lg" disabled={!file || isGenerating} onClick={handleGenerateClick}>
+               <Button size="lg" disabled={!file || !prompt || isGenerating} onClick={handleGenerateClick}>
                 {isGenerating ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <Video className="ml-2 h-5 w-5" />}
                 {isGenerating ? 'جاري إنشاء الفيديو...' : 'ابدأ إنشاء الفيديو'}
               </Button>
@@ -193,9 +221,9 @@ export default function VideoGeneratorPage() {
           </Card>
            
           {error && (
-            <Alert variant={error.includes('قيد التطوير') ? 'default' : 'destructive'}>
+            <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{error.includes('قيد التطوير') ? 'ملاحظة' : 'حدث خطأ'}</AlertTitle>
+                <AlertTitle>حدث خطأ</AlertTitle>
                 <AlertDescription>
                     {error}
                 </AlertDescription>

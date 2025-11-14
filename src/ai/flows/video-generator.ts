@@ -10,9 +10,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import * as fs from 'fs';
-import { Readable } from 'stream';
 import { MediaPart } from 'genkit';
+
 
 export const GenerateVideoInputSchema = z.object({
   prompt: z.string().describe("A text description of the desired video content."),
@@ -25,7 +24,7 @@ export const GenerateVideoInputSchema = z.object({
 export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
 
 export const GenerateVideoOutputSchema = z.object({
-  videoUrl: z.string().describe("The URL or data URI of the generated video."),
+  videoUrl: z.string().describe("The data URI of the generated video."),
 });
 export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 
@@ -48,8 +47,9 @@ const generateVideoFlow = ai.defineFlow(
     let extractedText = '';
 
     if (fileDataUri) {
-      if (fileDataUri.startsWith('data:image')) {
-         promptParts.push({ media: { url: fileDataUri, contentType: fileDataUri.substring(5, fileDataUri.indexOf(';')) } });
+      const mimeType = fileDataUri.substring(5, fileDataUri.indexOf(';'));
+      if (mimeType.startsWith('image')) {
+         promptParts.push({ media: { url: fileDataUri, contentType: mimeType } });
       } else {
         // If it's a PDF or text file, first extract text
         const textResponse = await ai.generate({
