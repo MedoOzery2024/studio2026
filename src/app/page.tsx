@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit } from "lucide-react";
+import { BrainCircuit, FileImage } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -37,6 +37,23 @@ export default function Home() {
                 <p className="text-xl font-bold">Mahmoud.AI Expert Assistant</p>
                 <p className="text-sm text-muted-foreground">
                   طرح الأسئلة، والحصول على شروح، وتوليد الأفكار.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/image-to-pdf" className="sm:col-span-2">
+            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  تحويل الصور إلى PDF
+                </CardTitle>
+                <FileImage className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-bold">Image to PDF Converter</p>
+                <p className="text-sm text-muted-foreground">
+                  تحويل الصور إلى ملفات PDF وتلخيصها باستخدام الذكاء
+                  الاصطناعي.
                 </p>
               </CardContent>
             </Card>
