@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion } from "lucide-react";
+import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -53,6 +53,12 @@ export default function Home() {
             title="مولد الأسئلة"
             description="إنشاء أسئلة تفاعلية وثابتة من الصور وملفات PDF."
             icon={<FileQuestion className="size-8 text-primary/80" />}
+          />
+          <FeatureCard
+            href="/mind-map-generator"
+            title="صانع الخرائط الذهنية"
+            description="إنشاء خرائط ذهنية من الصور وملفات PDF."
+            icon={<Brain className="size-8 text-primary/80" />}
           />
         </div>
       </div>
