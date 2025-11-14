@@ -59,8 +59,9 @@ export async function textToSpeechSimple(input: TextToSpeechSimpleInput): Promis
         throw new Error("Input text cannot be empty.");
     }
     
-    const isArabic = /[\u0600-\u06FF]/.test(text);
-    const voiceName = isArabic ? 'ar-XA-Standard-A' : 'en-US-Standard-E';
+    // The new TTS model uses codenames for voices. We'll pick one.
+    // 'rasalgethi' is a pleasant female-sounding voice.
+    const voiceName = 'rasalgethi';
 
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),

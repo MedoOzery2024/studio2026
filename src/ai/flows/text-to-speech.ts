@@ -71,11 +71,8 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     }
     
     // 2. Convert the extracted text to speech
-    const isArabic = /[\u0600-\u06FF]/.test(extractedText);
-    const voiceName = isArabic 
-        ? (voice === 'male' ? 'ar-XA-Standard-B' : 'ar-XA-Standard-A')
-        : (voice === 'male' ? 'en-US-Standard-D' : 'en-US-Standard-E');
-
+    // The new TTS model uses codenames. We'll pick voices that sound male/female.
+    const voiceName = voice === 'male' ? 'puck' : 'rasalgethi';
 
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
