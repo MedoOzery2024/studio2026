@@ -23,6 +23,15 @@ import { Upload, FileUp, BarChart3, Loader2, AlertCircle, Download, FileText } f
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeChart, AnalyzeChartInput, AnalyzeChartOutput } from '@/ai/flows/chart-analyzer';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { font } from './font'; // Import the font
+
+// Extend jsPDF with the autoTable plugin
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
+
 
 export default function ChartAnalyzerPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -79,7 +88,7 @@ export default function ChartAnalyzerPage() {
             setAnalysisResult(result);
             toast({
               title: 'تم تحليل الرسم البياني بنجاح!',
-              description: 'يمكنك الآن استعراض البيانات المستخرجة.',
+              description: 'يمكنك الآن استعراض البيانات وتصديرها.',
             });
           } else {
              setError('لم يتمكن الذكاء الاصطناعي من تحليل الرسم البياني. حاول مرة أخرى بملف مختلف.');
@@ -101,6 +110,67 @@ export default function ChartAnalyzerPage() {
     }
   };
   
+    const handleExportToPDF = () => {
+    if (!analysisResult) return;
+
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+
+    // Add the custom font
+    doc.addFileToVFS('Cairo-Regular-normal.ttf', font);
+    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
+    doc.setFont('Cairo-Regular');
+    
+    // jsPDF does not handle RTL text wrapping well, so we split it manually
+    const wrapText = (text: string, maxWidth: number) => {
+        const lines = doc.splitTextToSize(text, maxWidth);
+        // Reverse lines for RTL display
+        return lines.reverse();
+    };
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 20;
+
+    // Title
+    doc.setFontSize(22);
+    doc.text(analysisResult.title, pageWidth / 2, y, { align: 'center', lang: 'ar' });
+    y += 15;
+    
+    // Summary
+    doc.setFontSize(16);
+    doc.text("ملخص التحليل", pageWidth - margin, y, { align: 'right', lang: 'ar' });
+    y += 8;
+    
+    doc.setFontSize(12);
+    const summaryLines = wrapText(analysisResult.summary, contentWidth);
+    doc.text(summaryLines, pageWidth - margin, y, { align: 'right', lang: 'ar' });
+    y += summaryLines.length * 7 + 10;
+
+    // Table
+    doc.setFontSize(16);
+    doc.text("جدول البيانات", pageWidth - margin, y, { align: 'right', lang: 'ar' });
+    y += 10;
+    
+    doc.autoTable({
+        startY: y,
+        head: [analysisResult.table.headers.map(h => h).reverse()],
+        body: analysisResult.table.rows.map(row => [...row].reverse()),
+        theme: 'grid',
+        styles: {
+            font: 'Cairo-Regular',
+            halign: 'right',
+        },
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+        },
+    });
+
+    doc.save(`${fileName.split('.')[0]}_analysis.pdf`);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
@@ -219,7 +289,7 @@ export default function ChartAnalyzerPage() {
                     </div>
                 </CardContent>
                 <CardFooter className="flex gap-4">
-                  <Button variant="outline" disabled>
+                  <Button variant="outline" onClick={handleExportToPDF} disabled={!analysisResult}>
                     <Download className="ml-2 h-4 w-4" />
                     تصدير كـ PDF
                   </Button>
