@@ -35,19 +35,16 @@ export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 
 
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
-  return generateQuestionsFlow(input);
-}
-
-const generateQuestionsFlow = ai.defineFlow(
-  {
-    name: 'generateQuestionsFlow',
-    inputSchema: GenerateQuestionsInputSchema,
-    outputSchema: GenerateQuestionsOutputSchema,
-  },
-  async (input) => {
-    const { fileDataUri, numQuestions, difficulty, questionType } = input;
-    
-    const prompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
+  const generateQuestionsFlow = ai.defineFlow(
+    {
+      name: 'generateQuestionsFlow',
+      inputSchema: GenerateQuestionsInputSchema,
+      outputSchema: GenerateQuestionsOutputSchema,
+    },
+    async (input) => {
+      const { fileDataUri, numQuestions, difficulty, questionType } = input;
+      
+      const prompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
 The question type is '${questionType}'.
 For each question, provide:
@@ -60,16 +57,18 @@ The entire response must be in the same language as the provided document (Arabi
 
 Content to analyze:
 {{media url=fileDataUri}}`;
-
-    const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
-      prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
-      output: {
-        schema: GenerateQuestionsOutputSchema
-      },
-      system: "You are an expert in creating educational materials and exam questions from provided content."
-    });
-
-    return response.output || { questions: [] };
-  }
-);
+  
+      const response = await ai.generate({
+        model: 'googleai/gemini-2.5-flash',
+        prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
+        output: {
+          schema: GenerateQuestionsOutputSchema
+        },
+        system: "You are an expert in creating educational materials and exam questions from provided content."
+      });
+  
+      return response.output || { questions: [] };
+    }
+  );
+  return generateQuestionsFlow(input);
+}
