@@ -35,14 +35,8 @@ export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSche
 export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 
 
-const generateQuestionsFlow = ai.defineFlow(
-  {
-    name: 'generateQuestionsFlow',
-    inputSchema: GenerateQuestionsInputSchema,
-    outputSchema: GenerateQuestionsOutputSchema,
-  },
-  async (flowInput) => {
-    const { fileDataUri, numQuestions, difficulty, questionType } = flowInput;
+export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
+    const { fileDataUri, numQuestions, difficulty, questionType } = input;
     
     const textPrompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
@@ -72,9 +66,4 @@ Content to analyze is attached.`;
     });
 
     return response.output || { questions: [] };
-  }
-);
-
-export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
-  return generateQuestionsFlow(input);
 }
