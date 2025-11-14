@@ -29,7 +29,7 @@ export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeIn
 
     if (input.audioDataUri) {
         const transcribeResponse = await ai.generate({
-            model: 'googleai/gemini-2.5-flash',
+            model: 'googleai/gemini-2.5-pro',
             prompt: [
                 { text: "Transcribe the following audio recording in Arabic. Provide only the transcribed text, with no additional commentary." },
                 { media: { url: input.audioDataUri } }
@@ -43,7 +43,7 @@ export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeIn
     }
 
     const summarizeResponse = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-2.5-pro',
         prompt: `Please provide a concise summary in Arabic for the following text:\n\n${transcription}`,
         system: 'You are an expert summarizer.'
     });

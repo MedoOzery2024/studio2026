@@ -13,7 +13,6 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { MediaPart } from 'genkit';
 
 
-export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
 const GenerateVideoInputSchema = z.object({
   prompt: z.string().describe("A text description of the desired video content."),
   fileDataUri: z.string().optional().describe(
@@ -22,11 +21,12 @@ const GenerateVideoInputSchema = z.object({
   durationSeconds: z.number().default(5).describe("The duration of the video in seconds."),
   aspectRatio: z.string().default('16:9').describe("The aspect ratio of the video."),
 });
+export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
 
-export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 const GenerateVideoOutputSchema = z.object({
   videoUrl: z.string().describe("The data URI of the generated video."),
 });
+export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
 
 
 export async function generateVideo(input: GenerateVideoInput): Promise<GenerateVideoOutput> {
@@ -43,7 +43,7 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
       } else {
         // If it's a PDF or text file, first extract text
         const textResponse = await ai.generate({
-          model: 'googleai/gemini-2.5-flash',
+          model: 'googleai/gemini-2.5-pro',
           prompt: [
             { text: "Extract all text from the following document. Respond only with the extracted text." },
             { media: { url: fileDataUri } }

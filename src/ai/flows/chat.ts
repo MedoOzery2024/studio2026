@@ -11,7 +11,6 @@ import {ai} from '@/ai/genkit';
 import { Message, Role, Part} from 'genkit';
 import {z} from 'genkit';
 
-export type ChatInput = z.infer<typeof ChatInputSchema>;
 const ChatInputSchema = z.object({
   history: z.array(z.object({
     role: z.enum(['user', 'model']),
@@ -22,6 +21,7 @@ const ChatInputSchema = z.object({
     "An optional file (image, PDF, etc.) as a data URI to provide context for the prompt."
   ),
 });
+export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 export type ChatOutput = string;
 
@@ -44,7 +44,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
     }
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-2.5-pro',
       prompt: promptParts,
       history,
       config: {

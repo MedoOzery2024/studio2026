@@ -10,23 +10,23 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export type GeneratePresentationInput = z.infer<typeof GeneratePresentationInputSchema>;
 const GeneratePresentationInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI."
   ),
 });
+export type GeneratePresentationInput = z.infer<typeof GeneratePresentationInputSchema>;
 
 const SlideSchema = z.object({
   title: z.string().describe('The title for this slide.'),
   points: z.array(z.string()).describe('An array of bullet points for the slide body.'),
 });
 
-export type GeneratePresentationOutput = z.infer<typeof GeneratePresentationOutputSchema>;
 const GeneratePresentationOutputSchema = z.object({
   title: z.string().describe('The main title for the entire presentation.'),
   slides: z.array(SlideSchema).describe('An array of slides.'),
 });
+export type GeneratePresentationOutput = z.infer<typeof GeneratePresentationOutputSchema>;
 
 export async function generatePresentation(input: GeneratePresentationInput): Promise<GeneratePresentationOutput> {
     const { fileDataUri } = input;
@@ -41,7 +41,7 @@ export async function generatePresentation(input: GeneratePresentationInput): Pr
 Content to analyze is attached.`;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: prompt },
         { media: { url: fileDataUri } }

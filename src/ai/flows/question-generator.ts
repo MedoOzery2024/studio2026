@@ -11,16 +11,15 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 
-export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
   options: z.array(z.string()).describe('An array of 4 possible answers.'),
   correctAnswer: z.string().describe('The correct answer from the options.'),
   explanation: z.string().describe('An explanation for why the answer is correct.'),
 });
+export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 
 
-export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 const GenerateQuestionsInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
@@ -29,11 +28,12 @@ const GenerateQuestionsInputSchema = z.object({
   numQuestions: z.number().describe('The number of questions to generate.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the questions.'),
 });
+export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
-export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
 const GenerateQuestionsOutputSchema = z.object({
   questions: z.array(QuestionSchema).describe('The array of generated questions.'),
 });
+export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
 
 
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
@@ -52,7 +52,7 @@ If the content is in English, options should be labeled A, B, C, D. If in Arabic
 
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: promptText },
         { media: { url: fileDataUri } }
