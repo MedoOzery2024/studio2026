@@ -11,7 +11,7 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, AudioLines, Volume2, User, Woman, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Upload, FileUp, Settings, AudioLines, User, Wrench, Loader2, AlertCircle, Download } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -177,7 +177,7 @@ export default function TextToSpeechPage() {
                 >
                   <Label htmlFor="female" className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                     <RadioGroupItem value="female" id="female" />
-                    <Woman className="size-5" />
+                    <Wrench className="size-5" />
                     <span>صوت امرأة</span>
                   </Label>
                    <Label htmlFor="male" className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">

@@ -69,7 +69,7 @@ const textToSpeechFlow = ai.defineFlow(
     const textResponse = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       prompt: [
-        { text: "Extract all text from the following document. Respond only with the extracted text, no additional commentary." },
+        { text: "Extract all text from the following document. Respond only with the extracted text, no additional commentary. The entire response must be in the same language as the provided document (e.g., Arabic or English)." },
         { media: { url: fileDataUri } }
       ],
     });
@@ -80,7 +80,11 @@ const textToSpeechFlow = ai.defineFlow(
     }
     
     // 2. Convert the extracted text to speech
-    const voiceName = voice === 'male' ? 'en-US-Standard-D' : 'en-US-Standard-E';
+    const isArabic = /[\u0600-\u06FF]/.test(extractedText);
+    const voiceName = isArabic 
+        ? (voice === 'male' ? 'ar-XA-Standard-B' : 'ar-XA-Standard-A')
+        : (voice === 'male' ? 'en-US-Standard-D' : 'en-US-Standard-E');
+
 
     const { media } = await ai.generate({
       model: ai.model('gemini-2.5-flash-preview-tts'),
