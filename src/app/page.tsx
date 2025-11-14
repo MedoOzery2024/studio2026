@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage } from "lucide-react";
+import { BrainCircuit, FileImage, Mic } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -54,6 +54,22 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">
                   تحويل الصور إلى ملفات PDF وتلخيصها باستخدام الذكاء
                   الاصطناعي.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/speech-to-text" className="sm:col-span-2">
+            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  تحويل الكلام إلى نص
+                </CardTitle>
+                <Mic className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-bold">Speech to Text Converter</p>
+                <p className="text-sm text-muted-foreground">
+                  تسجيل الصوت من الميكروفون وتحويله إلى نص مكتوب.
                 </p>
               </CardContent>
             </Card>
