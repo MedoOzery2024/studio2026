@@ -26,6 +26,8 @@ import { analyzeChart, AnalyzeChartInput, AnalyzeChartOutput } from '@/ai/flows/
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { font } from './font'; // Import the font
+import PptxGenJS from 'pptxgenjs';
+
 
 // Extend jsPDF with the autoTable plugin
 interface jsPDFWithAutoTable extends jsPDF {
@@ -171,6 +173,62 @@ export default function ChartAnalyzerPage() {
     doc.save(`${fileName.split('.')[0]}_analysis.pdf`);
   };
 
+  const handleExportToPPTX = () => {
+    if (!analysisResult) return;
+
+    const pptx = new PptxGenJS();
+    pptx.rtl = true;
+
+    // Title Slide
+    const titleSlide = pptx.addSlide();
+    titleSlide.addText(analysisResult.title, { 
+        x: 0, y: 1, w: '100%', h: 1.5, 
+        align: 'center', fontSize: 32, bold: true, color: '363636' 
+    });
+    titleSlide.addText('تحليل بواسطة Mahmoud.AI', {
+        x: 0, y: 4, w: '100%', h: 1,
+        align: 'center', fontSize: 18, color: '7F7F7F'
+    });
+
+    // Summary Slide
+    const summarySlide = pptx.addSlide();
+    summarySlide.addText('ملخص التحليل', { 
+        x: 0.5, y: 0.25, w: '90%', h: 0.75, 
+        align: 'right', fontSize: 24, bold: true, color: '363636' 
+    });
+    summarySlide.addText(analysisResult.summary, {
+        x: 0.5, y: 1.1, w: '90%', h: 4,
+        align: 'right', fontSize: 16, color: '494949',
+    });
+
+    // Table Slide
+    const tableSlide = pptx.addSlide();
+    tableSlide.addText('جدول البيانات', { 
+        x: 0.5, y: 0.25, w: '90%', h: 0.75, 
+        align: 'right', fontSize: 24, bold: true, color: '363636' 
+    });
+    
+    // pptxgenjs tables do not directly support RTL text in the same way, we can align text right
+    const tableHeaders = analysisResult.table.headers.map(header => ({ text: header, options: { bold: true } }));
+    const tableRows = analysisResult.table.rows;
+
+    tableSlide.addTable(tableRows, {
+        x: 0.5, y: 1.1, w: '90%',
+        head: tableHeaders,
+        rowH: 0.5,
+        colW: Array(analysisResult.table.headers.length).fill(9 / analysisResult.table.headers.length),
+        border: { type: 'solid', pt: 1, color: 'D9D9D9' },
+        align: 'right',
+        valign: 'middle',
+        headAlign: 'right',
+        fontSize: 12,
+        autoPage: true,
+    });
+    
+    pptx.writeFile({ fileName: `${fileName.split('.')[0]}_analysis.pptx` });
+
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
@@ -293,7 +351,7 @@ export default function ChartAnalyzerPage() {
                     <Download className="ml-2 h-4 w-4" />
                     تصدير كـ PDF
                   </Button>
-                  <Button variant="outline" disabled>
+                  <Button variant="outline" onClick={handleExportToPPTX} disabled={!analysisResult}>
                     <Download className="ml-2 h-4 w-4" />
                     تصدير كـ PowerPoint
                   </Button>
