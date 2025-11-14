@@ -5,3 +5,4 @@ import './flows/speech';
 import './flows/question-generator';
 import './flows/mind-map-generator';
 import './flows/text-to-speech';
+import './flows/chart-analyzer';

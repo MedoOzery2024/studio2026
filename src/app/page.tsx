@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines } from "lucide-react";
+import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines, BarChart3 } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -65,6 +65,12 @@ export default function Home() {
             title="تحويل النص إلى كلام"
             description="تحويل محتوى المستندات إلى ملفات صوتية مسموعة."
             icon={<AudioLines className="size-8 text-primary/80" />}
+          />
+          <FeatureCard
+            href="/chart-analyzer"
+            title="محلل الرسومات البيانية"
+            description="تحليل الرسوم البيانية واستخراج البيانات في جداول."
+            icon={<BarChart3 className="size-8 text-primary/80" />}
           />
         </div>
       </div>
