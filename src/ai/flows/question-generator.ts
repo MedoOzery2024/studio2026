@@ -18,7 +18,7 @@ const QuestionSchema = z.object({
   explanation: z.string().describe('An explanation for why the answer is correct.'),
 });
 
-const GenerateQuestionsInputSchema = z.object({
+export const GenerateQuestionsInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
   ),
@@ -28,24 +28,23 @@ const GenerateQuestionsInputSchema = z.object({
 });
 export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
 
-const GenerateQuestionsOutputSchema = z.object({
+export const GenerateQuestionsOutputSchema = z.object({
   questions: z.array(QuestionSchema).describe('The array of generated questions.'),
 });
 export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
 export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 
 
-export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
-  const generateQuestionsFlow = ai.defineFlow(
-    {
-      name: 'generateQuestionsFlow',
-      inputSchema: GenerateQuestionsInputSchema,
-      outputSchema: GenerateQuestionsOutputSchema,
-    },
-    async (flowInput) => {
-      const { fileDataUri, numQuestions, difficulty, questionType } = flowInput;
-      
-      const textPrompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
+const generateQuestionsFlow = ai.defineFlow(
+  {
+    name: 'generateQuestionsFlow',
+    inputSchema: GenerateQuestionsInputSchema,
+    outputSchema: GenerateQuestionsOutputSchema,
+  },
+  async (flowInput) => {
+    const { fileDataUri, numQuestions, difficulty, questionType } = flowInput;
+    
+    const textPrompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
 The question type is '${questionType}'.
 For each question, provide:
@@ -58,22 +57,24 @@ The entire response must be in the same language as the provided document (Arabi
 
 Content to analyze is attached.`;
 
-      const promptParts: Part[] = [
-        { text: textPrompt },
-        { media: { url: fileDataUri } }
-      ];
-  
-      const response = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
-        prompt: promptParts,
-        output: {
-          schema: GenerateQuestionsOutputSchema
-        },
-        system: "You are an expert in creating educational materials and exam questions from provided content."
-      });
-  
-      return response.output || { questions: [] };
-    }
-  );
+    const promptParts: Part[] = [
+      { text: textPrompt },
+      { media: { url: fileDataUri } }
+    ];
+
+    const response = await ai.generate({
+      model: 'googleai/gemini-2.5-flash',
+      prompt: promptParts,
+      output: {
+        schema: GenerateQuestionsOutputSchema
+      },
+      system: "You are an expert in creating educational materials and exam questions from provided content."
+    });
+
+    return response.output || { questions: [] };
+  }
+);
+
+export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
   return generateQuestionsFlow(input);
 }
