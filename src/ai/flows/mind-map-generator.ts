@@ -10,12 +10,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+export type GenerateMindMapInput = z.infer<typeof GenerateMindMapInputSchema>;
 const GenerateMindMapInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
   ),
 });
-export type GenerateMindMapInput = z.infer<typeof GenerateMindMapInputSchema>;
 
 // We define a recursive schema for the mind map nodes
 const MindMapNodeSchema: z.ZodType<MindMapNode> = z.object({
@@ -30,8 +30,8 @@ export type MindMapNode = {
   subIdeas?: MindMapNode[];
 };
 
-const GenerateMindMapOutputSchema = MindMapNodeSchema;
 export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
+const GenerateMindMapOutputSchema = MindMapNodeSchema;
 
 
 export async function generateMindMap(input: GenerateMindMapInput): Promise<GenerateMindMapOutput> {

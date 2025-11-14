@@ -11,18 +11,18 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import wav from 'wav';
 
+export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 const TextToSpeechInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding."
   ),
   voice: z.enum(['male', 'female']).describe('The desired voice for the speech output.'),
 });
-export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 
+export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
 const TextToSpeechOutputSchema = z.object({
   audioDataUri: z.string().describe("The generated audio as a data URI in WAV format."),
 });
-export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
 
 
 async function toWav(

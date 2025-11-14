@@ -10,26 +10,25 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const AnalyzeChartInputSchema = z.object({
-  fileDataUri: z.string().describe(
-    "The content file (image or PDF) containing a chart, as a data URI."
-  ),
-});
-export type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
+export async function analyzeChart(input: { fileDataUri: string; }): Promise<{ title: string; summary: string; table: { headers: string[]; rows: string[][]; }; }> {
+    const AnalyzeChartInputSchema = z.object({
+      fileDataUri: z.string().describe(
+        "The content file (image or PDF) containing a chart, as a data URI."
+      ),
+    });
+    type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
 
-const TableRowSchema = z.array(z.string());
-const AnalyzeChartOutputSchema = z.object({
-    title: z.string().describe("The title of the chart."),
-    summary: z.string().describe("A detailed summary and interpretation of the chart's data and trends. This must be in the same language as the chart itself (e.g., Arabic or English)."),
-    table: z.object({
-        headers: z.array(z.string()).describe("The headers for the data table. This must be in the same language as the chart itself (e.g., Arabic or English)."),
-        rows: z.array(TableRowSchema).describe("The rows of data from the chart."),
-    }).describe("The data extracted from the chart in a tabular format.")
-});
-export type AnalyzeChartOutput = z.infer<typeof AnalyzeChartOutputSchema>;
-
-
-export async function analyzeChart(input: AnalyzeChartInput): Promise<AnalyzeChartOutput> {
+    const TableRowSchema = z.array(z.string());
+    const AnalyzeChartOutputSchema = z.object({
+        title: z.string().describe("The title of the chart."),
+        summary: z.string().describe("A detailed summary and interpretation of the chart's data and trends. This must be in the same language as the chart itself (e.g., Arabic or English)."),
+        table: z.object({
+            headers: z.array(z.string()).describe("The headers for the data table. This must be in the same language as the chart itself (e.g., Arabic or English)."),
+            rows: z.array(TableRowSchema).describe("The rows of data from the chart."),
+        }).describe("The data extracted from the chart in a tabular format.")
+    });
+    type AnalyzeChartOutput = z.infer<typeof AnalyzeChartOutputSchema>;
+    
     const { fileDataUri } = input;
 
     const prompt = `You are an expert data analyst. Analyze the chart provided in the content.

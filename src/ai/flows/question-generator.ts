@@ -39,12 +39,10 @@ const GenerateQuestionsOutputSchema = z.object({
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
     const { fileDataUri, numQuestions, difficulty, questionType } = input;
     
-    // Base prompt
     let promptText = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
 The entire response must be in the same language as the provided document (Arabic or English).`;
 
-    // Add instructions based on question type
     if (questionType === 'fixed') {
         promptText += `\nFor each question, provide:
 1. The question text.
