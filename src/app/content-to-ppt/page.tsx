@@ -15,6 +15,8 @@ import { Upload, FileUp, Presentation, Loader2, AlertCircle, Download, Settings 
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
+import { generatePresentation, GeneratePresentationInput } from '@/ai/flows/content-to-ppt';
+import PptxGenJS from 'pptxgenjs';
 
 export default function ContentToPptPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,7 +25,6 @@ export default function ContentToPptPage() {
   const { toast } = useToast();
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPptUrl, setGeneratedPptUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [outputFileName, setOutputFileName] = useState('presentation');
 
@@ -34,7 +35,6 @@ export default function ContentToPptPage() {
       if (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
         setFileName(selectedFile.name);
-        setGeneratedPptUrl(null);
         setError(null);
       } else {
         toast({
@@ -56,27 +56,79 @@ export default function ContentToPptPage() {
       return;
     }
     
-    // This is a placeholder for the actual generation logic
     setIsGenerating(true);
     setError(null);
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate AI processing
-    setError("ميزة إنشاء العروض التقديمية قيد التطوير حاليًا. يرجى المحاولة مرة أخرى لاحقًا.");
-    toast({
-        variant: "default",
-        title: "تحت التطوير",
-        description: "هذه الميزة لا تزال قيد الإنشاء.",
-    });
-    setIsGenerating(false);
-  };
-  
-    const handleDownload = () => {
-    if (!generatedPptUrl) return;
-    const a = document.createElement('a');
-    a.href = generatedPptUrl;
-    a.download = `${outputFileName.trim() || 'presentation'}.pptx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        const input: GeneratePresentationInput = { fileDataUri: base64Data };
+
+        const presentationData = await generatePresentation(input);
+
+        if (!presentationData || !presentationData.slides || presentationData.slides.length === 0) {
+            throw new Error("لم يتمكن الذكاء الاصطناعي من إنشاء عرض تقديمي من هذا المحتوى.");
+        }
+        
+        const pptx = new PptxGenJS();
+        pptx.rtl = true;
+
+        // Title Slide
+        const titleSlide = pptx.addSlide();
+        titleSlide.addText(presentationData.title, { 
+            x: 0.5, y: 2, w: '90%', h: 1.5, 
+            align: 'center', fontSize: 36, bold: true, color: '363636' 
+        });
+
+        // Content Slides
+        presentationData.slides.forEach(slideData => {
+            const slide = pptx.addSlide();
+            slide.addText(slideData.title, { 
+                x: 0.5, y: 0.25, w: '90%', h: 0.75, 
+                align: 'right', fontSize: 28, bold: true, color: '000000' 
+            });
+            
+            const contentPoints = slideData.points.map(point => ({ text: point }));
+            
+            if (contentPoints.length > 0) {
+                slide.addText(contentPoints, { 
+                    x: 0.5, y: 1.2, w: '90%', h: 4, 
+                    align: 'right', fontSize: 18, bullet: true, color: '363636' 
+                });
+            }
+        });
+
+        // Thank you slide
+        const thankYouSlide = pptx.addSlide();
+        thankYouSlide.addText("شكراً لكم", {
+            x: 0, y: 0, w: '100%', h: '100%',
+            align: 'center', valign: 'middle', fontSize: 48, bold: true, color: '363636'
+        });
+
+        await pptx.writeFile({ fileName: `${outputFileName.trim() || 'presentation'}.pptx` });
+
+        toast({
+            title: "تم إنشاء العرض التقديمي بنجاح!",
+            description: "بدأ تنزيل الملف الآن.",
+        });
+
+      };
+      reader.onerror = () => {
+        throw new Error('فشل في قراءة الملف.');
+      };
+    } catch(e: any) {
+        console.error("Error generating presentation:", e);
+        setError(e.message || 'حدث خطأ غير متوقع أثناء إنشاء العرض التقديمي.');
+        toast({
+            variant: 'destructive',
+            title: 'فشل الإنشاء',
+            description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+        });
+    } finally {
+        setIsGenerating(false);
+    }
   };
   
   return (
@@ -167,21 +219,6 @@ export default function ContentToPptPage() {
                     <p className="text-lg">يقوم الذكاء الاصطناعي بتحليل المحتوى وتصميمه في عرض تقديمي...</p>
                   </div>
                 </CardContent>
-            </Card>
-          )}
-
-          {generatedPptUrl && !isGenerating && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>العرض التقديمي جاهز</CardTitle>
-                    <CardDescription>يمكنك الآن تنزيل ملف PowerPoint الذي تم إنشاؤه.</CardDescription>
-                </CardHeader>
-                <CardFooter>
-                     <Button onClick={handleDownload}>
-                      <Download className="ml-2 h-4 w-4" />
-                      تنزيل العرض التقديمي (.pptx)
-                    </Button>
-                </CardFooter>
             </Card>
           )}
 

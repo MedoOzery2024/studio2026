@@ -6,3 +6,4 @@ import './flows/question-generator';
 import './flows/mind-map-generator';
 import './flows/text-to-speech';
 import './flows/chart-analyzer';
+import './flows/content-to-ppt';
