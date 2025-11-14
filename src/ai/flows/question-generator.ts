@@ -57,8 +57,6 @@ The entire response must be in the same language as the provided document (Arabi
 4. A very brief explanation for the correct answer (will be shown after the user answers).`;
     }
 
-    promptText += "\n\nContent to analyze is attached.";
-
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       prompt: [
