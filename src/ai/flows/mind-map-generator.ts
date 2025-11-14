@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const GenerateMindMapInputSchema = z.object({
+const GenerateMindMapInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
   ),
@@ -30,7 +30,7 @@ export type MindMapNode = {
   subIdeas?: MindMapNode[];
 };
 
-export const GenerateMindMapOutputSchema = MindMapNodeSchema;
+const GenerateMindMapOutputSchema = MindMapNodeSchema;
 export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
 
 

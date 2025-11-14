@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const GeneratePresentationInputSchema = z.object({
+const GeneratePresentationInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) as a data URI."
   ),
@@ -22,7 +22,7 @@ const SlideSchema = z.object({
   points: z.array(z.string()).describe('An array of bullet points for the slide body.'),
 });
 
-export const GeneratePresentationOutputSchema = z.object({
+const GeneratePresentationOutputSchema = z.object({
   title: z.string().describe('The main title for the entire presentation.'),
   slides: z.array(SlideSchema).describe('An array of slides.'),
 });

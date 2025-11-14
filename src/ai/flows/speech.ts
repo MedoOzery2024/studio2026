@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const SpeechToTextAndSummarizeInputSchema = z.object({
+const SpeechToTextAndSummarizeInputSchema = z.object({
   audioDataUri: z.string().describe(
     "An audio recording, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. Can be an empty string if existingText is provided."
   ),
@@ -18,7 +18,7 @@ export const SpeechToTextAndSummarizeInputSchema = z.object({
 });
 export type SpeechToTextAndSummarizeInput = z.infer<typeof SpeechToTextAndSummarizeInputSchema>;
 
-export const SpeechToTextAndSummarizeOutputSchema = z.object({
+const SpeechToTextAndSummarizeOutputSchema = z.object({
   transcription: z.string().describe('The transcribed text from the audio.'),
   summary: z.string().describe('The summary of the transcribed text.'),
 });

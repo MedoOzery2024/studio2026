@@ -13,7 +13,7 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { MediaPart } from 'genkit';
 
 
-export const GenerateVideoInputSchema = z.object({
+const GenerateVideoInputSchema = z.object({
   prompt: z.string().describe("A text description of the desired video content."),
   fileDataUri: z.string().optional().describe(
     "An optional content file (image, PDF, or text) to base the video on, as a data URI."
@@ -23,7 +23,7 @@ export const GenerateVideoInputSchema = z.object({
 });
 export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
 
-export const GenerateVideoOutputSchema = z.object({
+const GenerateVideoOutputSchema = z.object({
   videoUrl: z.string().describe("The data URI of the generated video."),
 });
 export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
