@@ -25,6 +25,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { speechToTextAndSummarize, SpeechToTextAndSummarizeInput } from '@/ai/flows/speech';
+import jsPDF from 'jspdf';
+import { font } from '../chart-analyzer/font';
 
 export default function SpeechToTextPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -150,6 +152,40 @@ export default function SpeechToTextPage() {
     }
   };
 
+  const downloadFile = (content: string, fileName: string, fileType: string) => {
+    const blob = new Blob([content], { type: fileType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportAsPdf = () => {
+    const doc = new jsPDF();
+    doc.addFileToVFS('Cairo-Regular-normal.ttf', font);
+    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
+    doc.setFont('Cairo-Regular');
+    
+    doc.text("النص المستخرج:", 20, 20);
+    doc.text(doc.splitTextToSize(transcribedText, 170), 20, 30);
+    
+    doc.addPage();
+    doc.text("الملخص:", 20, 20);
+    doc.text(doc.splitTextToSize(summary, 170), 20, 30);
+    
+    doc.save('speech_analysis.pdf');
+  };
+  
+  const clearContent = () => {
+    setTranscribedText('');
+    setSummary('');
+    audioChunksRef.current = [];
+    toast({ title: 'تم حذف المحتوى.' });
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
@@ -173,11 +209,12 @@ export default function SpeechToTextPage() {
                 variant={isRecording ? 'destructive' : 'default'}
                 onClick={handleToggleRecording}
                 disabled={hasPermission === null || isProcessing}
+                className="w-16 h-16 rounded-full"
               >
-                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isRecording ? (
-                  <MicOff className="h-5 w-5" />
+                {isProcessing ? <Loader2 className="h-7 w-7 animate-spin" /> : (isRecording ? (
+                  <MicOff className="h-7 w-7" />
                 ) : (
-                  <Mic className="h-5 w-5" />
+                  <Mic className="h-7 w-7" />
                 ))}
               </Button>
             </CardHeader>
@@ -246,33 +283,25 @@ export default function SpeechToTextPage() {
               <CardTitle>تصدير وحفظ</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
-              <Button variant="outline" disabled={!transcribedText}>
+              <Button variant="outline" onClick={exportAsPdf} disabled={!transcribedText && !summary}>
                 <FileDown className="ml-2 h-4 w-4" />
                 تنزيل PDF
               </Button>
-               <Button variant="outline" disabled={!transcribedText}>
+               <Button variant="outline" onClick={() => downloadFile(transcribedText + '\n\nالملخص:\n' + summary, 'analysis.docx', 'application/msword')} disabled={!transcribedText && !summary}>
                 <FileDown className="ml-2 h-4 w-4" />
                 تنزيل Word
               </Button>
-               <Button variant="outline" disabled={!transcribedText}>
-                <FileDown className="ml-2 h-4 w-4" />
-                تنزيل PowerPoint
-              </Button>
-               <Button variant="outline" disabled={!transcribedText}>
+               <Button variant="outline" onClick={() => downloadFile(transcribedText + '\n\nالملخص:\n' + summary, 'analysis.txt', 'text/plain')}>
                 <FileDown className="ml-2 h-4 w-4" />
                 تنزيل نص
               </Button>
             </CardContent>
              <CardFooter className="border-t pt-6 flex-col items-start gap-4">
-               <p className="text-sm font-medium">حفظ التسجيل الصوتي</p>
+               <p className="text-sm font-medium">التحكم بالمحتوى</p>
                <div className="flex w-full max-w-sm items-center space-x-2 space-x-reverse">
-                <Button variant="outline" disabled={!transcribedText}>
-                  <Save className="ml-2 h-4 w-4" />
-                  حفظ
-                </Button>
-                 <Button variant="destructive" disabled={!transcribedText}>
+                 <Button variant="destructive" onClick={clearContent} disabled={!transcribedText && !summary && audioChunksRef.current.length === 0}>
                   <Trash2 className="ml-2 h-4 w-4" />
-                  حذف
+                  حذف كل شيء
                 </Button>
               </div>
             </CardFooter>

@@ -16,6 +16,8 @@ import { Upload, FileUp, BrainCircuit, Loader2, AlertCircle, Download, File, Sha
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { generateMindMap, GenerateMindMapInput, MindMapNode } from '@/ai/flows/mind-map-generator';
+import jsPDF from 'jspdf';
+import PptxGenJS from 'pptxgenjs';
 
 // Recursive component to render the mind map
 const MindMapNodeComponent = ({ node, level }: { node: MindMapNode, level: number }) => {
@@ -118,6 +120,29 @@ export default function MindMapGeneratorPage() {
         setIsGenerating(false);
     }
   };
+
+  const exportToPptx = () => {
+    if (!generatedMindMap) return;
+    const pptx = new PptxGenJS();
+    pptx.rtl = true;
+
+    const addNodeToPptx = (node: MindMapNode, slide: PptxGenJS.Slide) => {
+      slide.addText(node.title, { x: 0.5, y: 0.5, w: '90%', h: 0.5, fontSize: 24, bold: true, align: 'right' });
+      slide.addText(node.details, { x: 0.5, y: 1.2, w: '90%', h: 4, fontSize: 16, align: 'right' });
+
+      if (node.subIdeas && node.subIdeas.length > 0) {
+        const subIdeasSlide = pptx.addSlide();
+        subIdeasSlide.addText(`الأفكار الفرعية لـ "${node.title}"`, { x: 0.5, y: 0.5, w: '90%', h: 0.5, fontSize: 24, bold: true, align: 'right' });
+        const points = node.subIdeas.map(sub => ({ text: sub.title, options: { bullet: true } }));
+        subIdeasSlide.addText(points, { x: 0.7, y: 1.5, w: '85%', h: 4, fontSize: 18, align: 'right' });
+
+        node.subIdeas.forEach(subNode => addNodeToPptx(subNode, pptx.addSlide()));
+      }
+    };
+    
+    addNodeToPptx(generatedMindMap, pptx.addSlide());
+    pptx.writeFile({ fileName: `${fileName.split('.')[0]}_mindmap.pptx` });
+  };
   
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
@@ -213,9 +238,9 @@ export default function MindMapGeneratorPage() {
                 <CardFooter className="flex gap-4">
                   <Button variant="outline" disabled>
                     <Download className="ml-2 h-4 w-4" />
-                    تصدير كـ PDF
+                    تصدير كـ PDF (قريباً)
                   </Button>
-                  <Button variant="outline" disabled>
+                  <Button variant="outline" onClick={exportToPptx}>
                     <Download className="ml-2 h-4 w-4" />
                     تصدير كـ PowerPoint
                   </Button>

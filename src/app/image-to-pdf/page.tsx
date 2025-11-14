@@ -20,12 +20,15 @@ import {
   XCircle,
   Download,
   CornerDownLeft,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import jsPDF from 'jspdf';
 
 type ImageFile = {
+  id: number;
   file: File;
   preview: string;
 };
@@ -44,6 +47,7 @@ export default function ImageToPdfPage() {
       const imageFiles = files
         .filter((file) => file.type.startsWith('image/'))
         .map((file) => ({
+          id: Date.now() + Math.random(),
           file,
           preview: URL.createObjectURL(file),
         }));
@@ -61,16 +65,29 @@ export default function ImageToPdfPage() {
     }
   };
 
-  const removeImage = (index: number) => {
-    const newImages = [...selectedImages];
-    const removedImage = newImages.splice(index, 1)[0];
-    URL.revokeObjectURL(removedImage.preview); // Clean up memory
+  const removeImage = (id: number) => {
+    const newImages = selectedImages.filter(image => image.id !== id);
+    const removedImage = selectedImages.find(image => image.id === id);
+    if(removedImage) {
+        URL.revokeObjectURL(removedImage.preview); // Clean up memory
+    }
     setSelectedImages(newImages);
     if (newImages.length === 0) {
       setPdfUrl(null);
     }
   };
   
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    const newImages = [...selectedImages];
+    const targetIndex = direction === 'left' ? index - 1 : index + 1;
+    if(targetIndex < 0 || targetIndex >= newImages.length) return;
+
+    const temp = newImages[index];
+    newImages[index] = newImages[targetIndex];
+    newImages[targetIndex] = temp;
+    setSelectedImages(newImages);
+  };
+
   const readImageFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -177,7 +194,7 @@ export default function ImageToPdfPage() {
                 انقر أو اسحب الصور هنا
               </p>
               <p className="text-sm text-muted-foreground">
-                يمكنك اختيار عدة صور في وقت واحد.
+                يمكنك اختيار عدة صور وإعادة ترتيبها.
               </p>
               <Input
                 ref={fileInputRef}
@@ -194,24 +211,37 @@ export default function ImageToPdfPage() {
             <Card>
               <CardHeader>
                 <CardTitle>الصور المختارة ({selectedImages.length})</CardTitle>
+                <CardDescription>يمكنك إعادة ترتيب الصور قبل التحويل.</CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {selectedImages.map((image, index) => (
-                  <div key={index} className="relative group aspect-square">
+                  <div key={image.id} className="relative group aspect-square">
                     <Image
                       src={image.preview}
                       alt={`Selected ${index + 1}`}
                       fill
                       className="object-cover rounded-md"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                     <div className="absolute top-1 right-1 text-white bg-black/50 rounded-full h-6 w-6 flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                     </div>
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => removeImage(index)}
+                        className="h-8 w-8"
+                        onClick={() => removeImage(image.id)}
                       >
                         <XCircle className="h-5 w-5" />
                       </Button>
+                      <div className='flex gap-1'>
+                        <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => moveImage(index, 'left')} disabled={index === 0}>
+                            <ArrowRight className='h-5 w-5'/>
+                        </Button>
+                        <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => moveImage(index, 'right')} disabled={index === selectedImages.length - 1}>
+                            <ArrowLeft className='h-5 w-5'/>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

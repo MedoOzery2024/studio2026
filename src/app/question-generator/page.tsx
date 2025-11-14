@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle, Loader2, CornerDownLeft, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle, Loader2, CornerDownLeft, CheckCircle, XCircle, Printer } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,7 +36,9 @@ export default function QuestionGeneratorPage() {
   const [questionType, setQuestionType] = useState<'interactive' | 'fixed'>('interactive');
   const [numQuestions, setNumQuestions] = useState(10);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-  const [timer, setTimer] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [timerSettings, setTimerSettings] = useState({ hours: 0, minutes: 5, seconds: 0 });
+  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   // AI state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -46,7 +48,27 @@ export default function QuestionGeneratorPage() {
   // Interactive state
   const [answers, setAnswers] = useState<AnswerState[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [isTestStarted, setIsTestStarted] = useState(false);
 
+  useEffect(() => {
+    if (isTestStarted && remainingTime > 0 && !showResults) {
+      const id = setInterval(() => {
+        setRemainingTime(prev => prev - 1);
+      }, 1000);
+      setTimerId(id);
+    } else if (remainingTime === 0 && isTestStarted) {
+      if (timerId) clearInterval(timerId);
+      setShowResults(true);
+      toast({
+        title: "انتهى الوقت!",
+        description: "تم عرض نتائج الاختبار.",
+      });
+    }
+
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [isTestStarted, remainingTime, showResults]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -58,6 +80,8 @@ export default function QuestionGeneratorPage() {
         setError(null);
         setAnswers([]);
         setShowResults(false);
+        setIsTestStarted(false);
+        if(timerId) clearInterval(timerId);
       } else {
         toast({
           variant: 'destructive',
@@ -83,6 +107,8 @@ export default function QuestionGeneratorPage() {
     setGeneratedQuestions([]);
     setAnswers([]);
     setShowResults(false);
+    setIsTestStarted(false);
+     if(timerId) clearInterval(timerId);
     
     try {
       const reader = new FileReader();
@@ -105,6 +131,11 @@ export default function QuestionGeneratorPage() {
           toast({
             title: 'تم إنشاء الأسئلة بنجاح!',
           });
+          if(questionType === 'interactive'){
+            const totalSeconds = timerSettings.hours * 3600 + timerSettings.minutes * 60 + timerSettings.seconds;
+            setRemainingTime(totalSeconds);
+            setIsTestStarted(true);
+          }
         } else {
           setError('لم يتمكن الذكاء الاصطناعي من إنشاء أسئلة من هذا المحتوى. حاول مرة أخرى بملف مختلف.');
         }
@@ -138,11 +169,22 @@ export default function QuestionGeneratorPage() {
   
   const calculateScore = () => {
     return answers.filter(a => a.isCorrect).length;
-  }
+  };
+
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
   
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
-      <header className="flex items-center justify-between border-b p-4">
+      <header className="flex items-center justify-between border-b p-4 print:hidden">
         <h1 className="text-xl font-bold text-primary">مولد الأسئلة</h1>
          <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
           <CornerDownLeft className="h-5 w-5" />
@@ -153,11 +195,10 @@ export default function QuestionGeneratorPage() {
       <main className="flex-1 p-4 md:p-8">
         <div className="mx-auto max-w-4xl space-y-8">
           
-          <Card
-            className="border-2 border-dashed border-muted-foreground/50 hover:border-primary transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer">
+          <Card className="print:hidden">
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer border-2 border-dashed border-muted-foreground/50 hover:border-primary transition-colors"
+             onClick={() => fileInputRef.current?.click()}
+            >
               <Upload className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 font-semibold">
                 انقر أو اسحب صورة أو ملف PDF هنا
@@ -184,7 +225,7 @@ export default function QuestionGeneratorPage() {
             )}
           </Card>
 
-          <Card>
+          <Card className="print:hidden">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Settings className="size-6 text-primary" />
@@ -251,11 +292,11 @@ export default function QuestionGeneratorPage() {
                 <Label>مؤقت الاختبار (للأسئلة التفاعلية)</Label>
                 <div className="flex items-center gap-2">
                     <Timer className='size-5 text-muted-foreground'/>
-                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ساعات" className='w-24' min="0" value={timer.hours} onChange={(e) => setTimer(t => ({ ...t, hours: parseInt(e.target.value) || 0 }))}/>
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ساعات" className='w-24' min="0" value={timerSettings.hours} onChange={(e) => setTimerSettings(t => ({ ...t, hours: parseInt(e.target.value) || 0 }))}/>
                     <span className="font-bold">:</span>
-                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="دقائق" className='w-24' min="0" max="59" value={timer.minutes} onChange={(e) => setTimer(t => ({ ...t, minutes: parseInt(e.target.value) || 0 }))}/>
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="دقائق" className='w-24' min="0" max="59" value={timerSettings.minutes} onChange={(e) => setTimerSettings(t => ({ ...t, minutes: parseInt(e.target.value) || 0 }))}/>
                      <span className="font-bold">:</span>
-                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ثواني" className='w-24' min="0" max="59" value={timer.seconds} onChange={(e) => setTimer(t => ({ ...t, seconds: parseInt(e.target.value) || 0 }))}/>
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ثواني" className='w-24' min="0" max="59" value={timerSettings.seconds} onChange={(e) => setTimerSettings(t => ({ ...t, seconds: parseInt(e.target.value) || 0 }))}/>
                 </div>
               </div>
             </CardContent>
@@ -268,7 +309,7 @@ export default function QuestionGeneratorPage() {
           </Card>
            
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="print:hidden">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>حدث خطأ</AlertTitle>
                 <AlertDescription>
@@ -279,15 +320,29 @@ export default function QuestionGeneratorPage() {
 
           {generatedQuestions.length > 0 && !isGenerating && (
             <Card>
-                <CardHeader>
-                    <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
-                    <CardDescription>
-                      {questionType === 'interactive' ? 'أجب على الأسئلة أدناه واختبر معلوماتك.' : 'استعرض الأسئلة وإجاباتها الصحيحة.'}
-                    </CardDescription>
+                <CardHeader className="flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
+                        <CardDescription>
+                          {questionType === 'interactive' ? 'أجب على الأسئلة أدناه واختبر معلوماتك.' : 'استعرض الأسئلة وإجاباتها الصحيحة.'}
+                        </CardDescription>
+                    </div>
+                     {questionType === 'fixed' && (
+                        <Button variant="outline" onClick={handlePrint} className="print:hidden">
+                            <Printer className="ml-2 h-4 w-4" />
+                            طباعة
+                        </Button>
+                     )}
                 </CardHeader>
-                <CardContent className='space-y-6'>
+                 {isTestStarted && !showResults && (
+                    <div className="p-4 border-t text-center">
+                        <p className="text-lg font-bold text-primary tabular-nums">{formatTime(remainingTime)}</p>
+                        <p className="text-sm text-muted-foreground">الوقت المتبقي</p>
+                    </div>
+                )}
+                <CardContent className='space-y-6 pt-6'>
                     {generatedQuestions.map((q, index) => (
-                        <div key={index} className='space-y-4 p-4 border rounded-lg bg-muted/30'>
+                        <div key={index} className='space-y-4 p-4 border rounded-lg bg-muted/30 print:border-0 print:p-0 print:bg-transparent print:break-inside-avoid'>
                             <p className='font-bold flex items-start gap-2'>
                               <span>{index + 1}.</span>
                               <span>{q.question}</span>
@@ -365,7 +420,7 @@ export default function QuestionGeneratorPage() {
                     ))}
                 </CardContent>
                 {questionType === 'interactive' && (
-                   <CardFooter className="flex-col items-stretch gap-4">
+                   <CardFooter className="flex-col items-stretch gap-4 print:hidden">
                      {showResults && (
                        <Alert variant="default" className="border-primary">
                           <BrainCircuit className="h-4 w-4" />
@@ -387,5 +442,4 @@ export default function QuestionGeneratorPage() {
       </main>
     </div>
   );
-
-    
+}

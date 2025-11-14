@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Paperclip, Send, User, Bot, CornerDownLeft, File as FileIcon, X } from 'lucide-react';
+import { Paperclip, Send, User, Bot, CornerDownLeft, File as FileIcon, X, Copy } from 'lucide-react';
 import { chat, ChatInput } from '@/ai/flows/chat';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -98,6 +98,14 @@ export default function ExpertAssistantPage() {
       handleSend();
     }
   };
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'تم النسخ بنجاح!',
+      description: 'تم نسخ رد الذكاء الاصطناعي إلى الحافظة.',
+    });
+  };
 
   return (
     <div className="flex h-screen flex-col bg-background" dir="rtl">
@@ -122,7 +130,7 @@ export default function ExpertAssistantPage() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex items-start gap-4 ${
+              className={`flex items-start gap-4 group ${
                 message.sender === 'user' ? 'justify-end' : ''
               }`}
             >
@@ -134,13 +142,23 @@ export default function ExpertAssistantPage() {
                 </Avatar>
               )}
               <div
-                className={`max-w-xl rounded-lg p-3 text-base leading-relaxed ${
+                className={`relative max-w-xl rounded-lg p-3 text-base leading-relaxed ${
                   message.sender === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
               >
-                <p>{message.text}</p>
+                {message.sender === 'ai' && (
+                   <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 left-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleCopy(message.text)}
+                   >
+                     <Copy className="h-4 w-4" />
+                   </Button>
+                )}
+                <p className="whitespace-pre-wrap">{message.text}</p>
               </div>
               {message.sender === 'user' && (
                 <Avatar className="h-9 w-9 border-2 border-border">

@@ -116,7 +116,7 @@ export default function FileCopierPage() {
              </CardHeader>
             <CardFooter>
                <Button size="lg" disabled={!file} onClick={handleDownloadCopy}>
-                <Download className="ml-2 h-5 w-5" />
+                <Copy className="ml-2 h-5 w-5" />
                 تنزيل نسخة من الملف
               </Button>
             </CardFooter>
