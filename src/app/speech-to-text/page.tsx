@@ -17,10 +17,12 @@ import {
   FileDown,
   Save,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { speechToTextAndSummarize, SpeechToTextAndSummarizeInput } from '@/ai/flows/speech';
 
 export default function SpeechToTextPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -28,6 +30,8 @@ export default function SpeechToTextPage() {
   const [summary, setSummary] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const { toast } = useToast();
 
@@ -36,8 +40,6 @@ export default function SpeechToTextPage() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setHasPermission(true);
-        // We don't need the stream here, just to check permission.
-        // Closing the stream to turn off the mic indicator.
         stream.getTracks().forEach(track => track.stop());
       } catch (err) {
         setHasPermission(false);
@@ -46,26 +48,106 @@ export default function SpeechToTextPage() {
     checkPermission();
   }, []);
 
+  const startRecording = async () => {
+    if (!hasPermission) {
+      toast({
+        variant: 'destructive',
+        title: 'إذن الميكروفون مطلوب',
+        description: 'الرجاء السماح بالوصول إلى الميكروفون لبدء التسجيل.',
+      });
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        setIsProcessing(true);
+        toast({ title: 'جاري معالجة الصوت...' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          try {
+             const input: SpeechToTextAndSummarizeInput = { audioDataUri: base64Audio };
+             const result = await speechToTextAndSummarize(input);
+             setTranscribedText(result.transcription);
+             setSummary(result.summary);
+             toast({ title: 'تمت المعالجة بنجاح!', description: 'تم استخراج النص وتلخيصه.' });
+          } catch(error) {
+              console.error("Error processing audio:", error);
+              toast({
+                  variant: 'destructive',
+                  title: 'فشل في معالجة الصوت',
+                  description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+              });
+          } finally {
+              setIsProcessing(false);
+          }
+        };
+
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setTranscribedText('');
+      setSummary('');
+      toast({ title: 'بدأ التسجيل...' });
+
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      toast({
+        variant: 'destructive',
+        title: 'فشل بدء التسجيل',
+        description: 'لم نتمكن من الوصول إلى الميكروفون.',
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      toast({ title: 'تم إيقاف التسجيل.' });
+    }
+  };
 
   const handleToggleRecording = () => {
     if (isRecording) {
-      // Stop recording logic will go here
-      setIsRecording(false);
-      toast({ title: 'تم إيقاف التسجيل.' });
+      stopRecording();
     } else {
-      // Start recording logic will go here
-      if(hasPermission) {
-        setIsRecording(true);
-        toast({ title: 'بدأ التسجيل...' });
-      } else {
-         toast({
-          variant: 'destructive',
-          title: 'إذن الميكروفون مطلوب',
-          description: 'الرجاء السماح بالوصول إلى الميكروفون لبدء التسجيل.',
-        });
-      }
+      startRecording();
     }
   };
+  
+   const handleSummarize = async () => {
+    if (!transcribedText || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const result = await speechToTextAndSummarize({ audioDataUri: '', existingText: transcribedText });
+      setSummary(result.summary);
+      toast({ title: 'تم التلخيص بنجاح!' });
+    } catch (error) {
+      console.error("Error summarizing text:", error);
+      toast({
+        variant: 'destructive',
+        title: 'فشل التلخيص',
+        description: 'حدث خطأ أثناء تلخيص النص.',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
@@ -84,18 +166,19 @@ export default function SpeechToTextPage() {
                 size="icon"
                 variant={isRecording ? 'destructive' : 'default'}
                 onClick={handleToggleRecording}
-                disabled={hasPermission === null}
+                disabled={hasPermission === null || isProcessing}
               >
-                {isRecording ? (
+                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isRecording ? (
                   <MicOff className="h-5 w-5" />
                 ) : (
                   <Mic className="h-5 w-5" />
-                )}
+                ))}
               </Button>
             </CardHeader>
             <CardContent>
               {hasPermission === false && (
                 <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
                   <AlertTitle>الوصول إلى الميكروفون مرفوض</AlertTitle>
                   <AlertDescription>
                     لاستخدام هذه الميزة، يرجى تمكين الوصول إلى الميكروفون في إعدادات المتصفح.
@@ -104,7 +187,7 @@ export default function SpeechToTextPage() {
               )}
                {hasPermission === true && (
                 <div className="text-center text-muted-foreground">
-                  {isRecording ? 'جاري التسجيل... تحدث الآن.' : 'اضغط على زر الميكروفون لبدء التسجيل.'}
+                  {isProcessing ? 'جاري المعالجة...' : (isRecording ? 'جاري التسجيل... تحدث الآن.' : 'اضغط على زر الميكروفون لبدء التسجيل.')}
                 </div>
                )}
                 {hasPermission === null && (
@@ -125,8 +208,9 @@ export default function SpeechToTextPage() {
                 <Textarea
                   placeholder="سيظهر النص المحول من الصوت هنا..."
                   value={transcribedText}
-                  readOnly
+                  onChange={(e) => setTranscribedText(e.target.value)}
                   className="h-64 resize-none"
+                  disabled={isProcessing}
                 />
               </CardContent>
             </Card>
@@ -143,8 +227,8 @@ export default function SpeechToTextPage() {
                 />
               </CardContent>
               <CardFooter>
-                 <Button disabled={!transcribedText || isProcessing}>
-                  {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                 <Button onClick={handleSummarize} disabled={!transcribedText || isProcessing}>
+                  {isProcessing && transcribedText ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <FileText className="ml-2 h-4 w-4" />}
                   تلخيص النص
                 </Button>
               </CardFooter>
