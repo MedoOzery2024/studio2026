@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Upload, FileUp, BarChart3, Loader2, AlertCircle, Download, FileText } from 'lucide-react';
+import { Upload, FileUp, BarChart3, Loader2, AlertCircle, Download, FileText, CornerDownLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeChart, AnalyzeChartInput, AnalyzeChartOutput } from '@/ai/flows/chart-analyzer';
@@ -233,6 +234,10 @@ export default function ChartAnalyzerPage() {
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
         <h1 className="text-xl font-bold text-primary">محلل الرسومات البيانية</h1>
+         <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+          <CornerDownLeft className="h-5 w-5" />
+          <span className="sr-only">العودة</span>
+        </Link>
       </header>
 
       <main className="flex-1 p-4 md:p-8">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,7 +12,7 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, Video, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Upload, FileUp, Settings, Video, Loader2, AlertCircle, Download, CornerDownLeft } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -119,6 +120,10 @@ export default function VideoGeneratorPage() {
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
         <h1 className="text-xl font-bold text-primary">منشئ الفيديو التعليمي</h1>
+         <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+          <CornerDownLeft className="h-5 w-5" />
+          <span className="sr-only">العودة</span>
+        </Link>
       </header>
 
       <main className="flex-1 p-4 md:p-8">
@@ -159,8 +164,7 @@ export default function VideoGeneratorPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Settings className="size-6 text-primary" />
-                <CardTitle>إعدادات الفيديو</CardTitle>
-              </div>
+                <CardTitle>إعدادات الفيديو</CardTitle>              </div>
               <CardDescription>
                 حدد خيارات الفيديو الذي سيتم إنشاؤه.
               </CardDescription>
