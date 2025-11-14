@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,9 +11,34 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, BrainCircuit, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Upload, FileUp, BrainCircuit, Loader2, AlertCircle, Download, File, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { generateMindMap, GenerateMindMapInput, MindMapNode } from '@/ai/flows/mind-map-generator';
+
+// Recursive component to render the mind map
+const MindMapNodeComponent = ({ node, level }: { node: MindMapNode, level: number }) => {
+  const levelColor = `hsl(var(--primary) / ${1 - level * 0.2})`;
+  return (
+    <div className={`space-y-2 ${level > 0 ? 'pr-4 border-r-2' : ''}`} style={{ borderColor: level > 0 ? levelColor : 'transparent' }}>
+      <details open={level < 2} className="group">
+        <summary className="cursor-pointer font-bold text-lg flex items-center gap-2">
+           <Share2 className="size-4 text-primary transition-transform group-open:rotate-90" style={{ color: levelColor }} />
+          <span style={{ color: levelColor }}>{node.title}</span>
+        </summary>
+        <p className="mt-1 text-muted-foreground pr-6 pb-2">{node.details}</p>
+        {node.subIdeas && node.subIdeas.length > 0 && (
+          <div className="space-y-4 pt-2">
+            {node.subIdeas.map((subNode, index) => (
+              <MindMapNodeComponent key={index} node={subNode} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </details>
+    </div>
+  );
+};
+
 
 export default function MindMapGeneratorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,7 +48,7 @@ export default function MindMapGeneratorPage() {
 
   // AI state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedMindMap, setGeneratedMindMap] = useState<any | null>(null);
+  const [generatedMindMap, setGeneratedMindMap] = useState<MindMapNode | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,17 +83,39 @@ export default function MindMapGeneratorPage() {
     setError(null);
     setGeneratedMindMap(null);
 
-    // AI generation logic will go here in the next step
-    // For now, let's simulate a delay
-    setTimeout(() => {
-      //
-      // setGeneratedMindMap({ mainIdea: 'Example', subIdeas: [] });
-      toast({
-        title: 'جاري التطوير...',
-        description: 'سيتم تفعيل إنشاء الخرائط الذهنية قريباً.',
-      });
-       setIsGenerating(false);
-    }, 2000);
+    try {
+       const reader = new FileReader();
+       reader.readAsDataURL(file);
+       reader.onloadend = async () => {
+          const base64Data = reader.result as string;
+          const input: GenerateMindMapInput = { fileDataUri: base64Data };
+          
+          const result = await generateMindMap(input);
+
+          if (result) {
+            setGeneratedMindMap(result);
+            toast({
+              title: 'تم إنشاء الخريطة الذهنية بنجاح!',
+              description: 'يمكنك الآن استعراضها وتصديرها.',
+            });
+          } else {
+             setError('لم يتمكن الذكاء الاصطناعي من إنشاء خريطة ذهنية. حاول مرة أخرى بملف مختلف.');
+          }
+       }
+       reader.onerror = () => {
+         throw new Error('فشل في قراءة الملف.');
+       }
+    } catch(e: any) {
+        console.error("Error generating mind map:", e);
+        setError(e.message || 'حدث خطأ غير متوقع أثناء إنشاء الخريطة الذهنية.');
+        toast({
+            variant: 'destructive',
+            title: 'فشل الإنشاء',
+            description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+        });
+    } finally {
+        setIsGenerating(false);
+    }
   };
   
   return (
@@ -82,7 +129,7 @@ export default function MindMapGeneratorPage() {
           
           <Card
             className="border-2 border-dashed border-muted-foreground/50 hover:border-primary transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !isGenerating && fileInputRef.current?.click()}
           >
             <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer">
               <Upload className="h-12 w-12 text-muted-foreground" />
@@ -136,17 +183,26 @@ export default function MindMapGeneratorPage() {
             </Alert>
           )}
 
-          {/* This section will be for displaying the generated mind map */}
+          {isGenerating && (
+             <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <p className="text-lg">يقوم الذكاء الاصطناعي بتحليل المحتوى ورسم الخريطة... قد يستغرق هذا بعض الوقت.</p>
+                  </div>
+                </CardContent>
+            </Card>
+          )}
+
           {generatedMindMap && !isGenerating && (
             <Card>
                 <CardHeader>
                     <CardTitle>الخريطة الذهنية</CardTitle>
-                    <CardDescription>هذه هي الخريطة الذهنية التي تم إنشاؤها من ملفك. يمكنك الآن تصديرها.</CardDescription>
+                    <CardDescription>هذه هي الخريطة الذهنية التي تم إنشاؤها من ملفك. يمكنك الآن استعراضها وتصديرها.</CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-6 border-t pt-6'>
-                    {/* Placeholder for mind map visualization */}
                     <div className='p-4 border rounded-lg bg-muted/20'>
-                      <p className='font-bold text-center'>سيتم عرض الخريطة الذهنية هنا</p>
+                       <MindMapNodeComponent node={generatedMindMap} level={0} />
                     </div>
                 </CardContent>
                 <CardFooter className="flex gap-4">
