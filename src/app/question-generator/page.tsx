@@ -11,16 +11,31 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle } from 'lucide-react';
+import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle, Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { generateQuestions, GenerateQuestionsInput, GenerateQuestionsOutput, GeneratedQuestion } from '@/ai/flows/question-generator';
 
 export default function QuestionGeneratorPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  // Form state
+  const [questionType, setQuestionType] = useState<'interactive' | 'fixed'>('interactive');
+  const [numQuestions, setNumQuestions] = useState(10);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [timer, setTimer] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  // AI state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -28,10 +43,71 @@ export default function QuestionGeneratorPage() {
       if (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
         setFileName(selectedFile.name);
+        setGeneratedQuestions([]);
+        setError(null);
       } else {
-        // You can add a toast notification here to inform the user about invalid file type
-        console.error('Invalid file type. Please select an image or a PDF.');
+        toast({
+          variant: 'destructive',
+          title: 'نوع ملف غير صالح',
+          description: 'الرجاء اختيار صورة أو ملف PDF.',
+        });
       }
+    }
+  };
+
+  const handleGenerateClick = async () => {
+    if (!file) {
+      toast({
+        variant: 'destructive',
+        title: 'لم يتم اختيار ملف',
+        description: 'الرجاء تحميل صورة أو ملف PDF أولاً.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setGeneratedQuestions([]);
+    
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        
+        const input: GenerateQuestionsInput = {
+          fileDataUri: base64Data,
+          questionType,
+          numQuestions,
+          difficulty,
+        };
+
+        const result = await generateQuestions(input);
+
+        if (result && result.questions.length > 0) {
+          setGeneratedQuestions(result.questions);
+          toast({
+            title: 'تم إنشاء الأسئلة بنجاح!',
+          });
+        } else {
+          setError('لم يتمكن الذكاء الاصطناعي من إنشاء أسئلة من هذا المحتوى. حاول مرة أخرى بملف مختلف.');
+        }
+      };
+      
+      reader.onerror = () => {
+        throw new Error('فشل في قراءة الملف.');
+      };
+
+    } catch (e: any) {
+      console.error('Error generating questions:', e);
+      setError(e.message || 'حدث خطأ غير متوقع أثناء إنشاء الأسئلة.');
+      toast({
+        variant: 'destructive',
+        title: 'فشل الإنشاء',
+        description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
   
@@ -62,6 +138,7 @@ export default function QuestionGeneratorPage() {
                 accept="image/*,application/pdf"
                 className="hidden"
                 onChange={handleFileSelect}
+                disabled={isGenerating}
               />
             </CardContent>
              {fileName && (
@@ -87,7 +164,12 @@ export default function QuestionGeneratorPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>نوع الأسئلة</Label>
-                <RadioGroup defaultValue="interactive" className="flex gap-4">
+                <RadioGroup 
+                  value={questionType}
+                  onValueChange={(val: 'interactive' | 'fixed') => setQuestionType(val)}
+                  className="flex gap-4"
+                  disabled={isGenerating}
+                >
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <RadioGroupItem value="interactive" id="interactive" />
                     <Label htmlFor="interactive">أسئلة تفاعلية</Label>
@@ -102,11 +184,24 @@ export default function QuestionGeneratorPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="num-questions">عدد الأسئلة</Label>
-                  <Input id="num-questions" type="number" placeholder="غير محدود" defaultValue="10" />
+                  <Input 
+                    id="num-questions" 
+                    type="number" 
+                    placeholder="10" 
+                    value={numQuestions}
+                    onChange={(e) => setNumQuestions(parseInt(e.target.value, 10) || 1)}
+                    min="1"
+                    max="50"
+                    disabled={isGenerating}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="difficulty">مستوى الصعوبة</Label>
-                   <Select defaultValue="medium">
+                   <Select 
+                     value={difficulty}
+                     onValueChange={(val: 'easy' | 'medium' | 'hard') => setDifficulty(val)}
+                     disabled={isGenerating}
+                    >
                     <SelectTrigger id="difficulty">
                       <SelectValue placeholder="اختر المستوى" />
                     </SelectTrigger>
@@ -123,39 +218,59 @@ export default function QuestionGeneratorPage() {
                 <Label>مؤقت الاختبار (للأسئلة التفاعلية)</Label>
                 <div className="flex items-center gap-2">
                     <Timer className='size-5 text-muted-foreground'/>
-                    <Input type="number" placeholder="ساعات" className='w-24' min="0" />
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ساعات" className='w-24' min="0" value={timer.hours} onChange={(e) => setTimer(t => ({ ...t, hours: parseInt(e.target.value) || 0 }))}/>
                     <span className="font-bold">:</span>
-                    <Input type="number" placeholder="دقائق" className='w-24' min="0" max="59"/>
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="دقائق" className='w-24' min="0" max="59" value={timer.minutes} onChange={(e) => setTimer(t => ({ ...t, minutes: parseInt(e.target.value) || 0 }))}/>
                      <span className="font-bold">:</span>
-                    <Input type="number" placeholder="ثواني" className='w-24' min="0" max="59"/>
+                    <Input disabled={isGenerating || questionType === 'fixed'} type="number" placeholder="ثواني" className='w-24' min="0" max="59" value={timer.seconds} onChange={(e) => setTimer(t => ({ ...t, seconds: parseInt(e.target.value) || 0 }))}/>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
-               <Button size="lg" disabled={!file}>
-                <BrainCircuit className="ml-2 h-5 w-5" />
-                ابدأ إنشاء الأسئلة
+               <Button size="lg" disabled={!file || isGenerating} onClick={handleGenerateClick}>
+                {isGenerating ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <BrainCircuit className="ml-2 h-5 w-5" />}
+                {isGenerating ? 'جاري إنشاء الأسئلة...' : 'ابدأ إنشاء الأسئلة'}
               </Button>
             </CardFooter>
           </Card>
            
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>قيد التطوير</AlertTitle>
-            <AlertDescription>
-                هذا القسم لا يزال قيد الإنشاء. سيتم تفعيل وظائف إنشاء الأسئلة قريبًا.
-            </AlertDescription>
-          </Alert>
+          {error && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>حدث خطأ</AlertTitle>
+                <AlertDescription>
+                    {error}
+                </AlertDescription>
+            </Alert>
+          )}
 
           {/* This section will be for displaying the generated questions */}
-          <Card className='hidden'>
-             <CardHeader>
-                <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
-             </CardHeader>
-             <CardContent>
-                {/* Questions will be rendered here */}
-             </CardContent>
-          </Card>
+          {generatedQuestions.length > 0 && !isGenerating && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                    {generatedQuestions.map((q, index) => (
+                        <div key={index} className='space-y-3 p-4 border rounded-lg'>
+                            <p className='font-bold'>{index + 1}. {q.question}</p>
+                            <div className='space-y-2 pr-4'>
+                                {q.options.map((opt, i) => (
+                                    <p key={i} className={`text-sm ${q.correctAnswer === opt ? 'text-green-400 font-semibold' : 'text-muted-foreground'}`}>{opt}</p>
+                                ))}
+                            </div>
+                            {questionType === 'fixed' && (
+                                <Alert className='mt-2'>
+                                    <FileText className="h-4 w-4" />
+                                    <AlertTitle>الشرح</AlertTitle>
+                                    <AlertDescription>{q.explanation}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+          )}
 
         </div>
       </main>
