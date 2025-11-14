@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { Part } from 'genkit';
 
 const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
@@ -51,14 +50,12 @@ The entire response must be in the same language as the provided document (Arabi
 
 Content to analyze is attached.`;
 
-    const promptParts: Part[] = [
-      { text: textPrompt },
-      { media: { url: fileDataUri } }
-    ];
-
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: promptParts,
+      prompt: [
+        { text: textPrompt },
+        { media: { url: fileDataUri } }
+      ],
       output: {
         schema: GenerateQuestionsOutputSchema
       },

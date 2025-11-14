@@ -39,12 +39,14 @@ export async function analyzeChart(input: AnalyzeChartInput): Promise<AnalyzeCha
 3.  Extract the data from the chart and structure it as a table with headers and rows.
 4.  The entire response (title, summary, headers, rows) must be in the same language as the provided document (e.g., Arabic or English).
 
-Content to analyze:
-{{media url=fileDataUri}}`;
+Content to analyze is attached.`;
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
+      prompt: [
+        { text: prompt },
+        { media: { url: fileDataUri } }
+      ],
       output: {
         schema: AnalyzeChartOutputSchema
       },

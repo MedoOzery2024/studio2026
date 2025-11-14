@@ -43,12 +43,14 @@ Each node in the mind map must have a 'title' (the core concept), 'details' (a c
 Ensure that the mind map is detailed and not just limited to main and sub-ideas without explanations.
 The entire response must be in the same language as the provided document (e.g., Arabic or English).
 
-Content to analyze:
-{{media url=fileDataUri}}`;
+Content to analyze is attached.`;
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
+      prompt: [
+        { text: prompt },
+        { media: { url: fileDataUri } }
+      ],
       output: {
         schema: GenerateMindMapOutputSchema
       },

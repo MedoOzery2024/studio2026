@@ -38,12 +38,14 @@ export async function generatePresentation(input: GeneratePresentationInput): Pr
 4.  The bullet points should be concise and summarize the key information.
 5.  The entire response must be in the same language as the provided document (e.g., Arabic or English).
 
-Content to analyze:
-{{media url=fileDataUri}}`;
+Content to analyze is attached.`;
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
+      prompt: [
+        { text: prompt },
+        { media: { url: fileDataUri } }
+      ],
       output: {
         schema: GeneratePresentationOutputSchema
       },
