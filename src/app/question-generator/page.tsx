@@ -12,13 +12,19 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle, Loader2, CornerDownLeft } from 'lucide-react';
+import { Upload, FileUp, Settings, BrainCircuit, FileText, Timer, AlertCircle, Loader2, CornerDownLeft, CheckCircle, XCircle } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuestions, GenerateQuestionsInput, GenerateQuestionsOutput, GeneratedQuestion } from '@/ai/flows/question-generator';
+import { cn } from '@/lib/utils';
+
+type AnswerState = {
+  selectedOption: string | null;
+  isCorrect: boolean | null;
+};
 
 export default function QuestionGeneratorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -36,6 +42,10 @@ export default function QuestionGeneratorPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  
+  // Interactive state
+  const [answers, setAnswers] = useState<AnswerState[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +56,8 @@ export default function QuestionGeneratorPage() {
         setFileName(selectedFile.name);
         setGeneratedQuestions([]);
         setError(null);
+        setAnswers([]);
+        setShowResults(false);
       } else {
         toast({
           variant: 'destructive',
@@ -69,6 +81,8 @@ export default function QuestionGeneratorPage() {
     setIsGenerating(true);
     setError(null);
     setGeneratedQuestions([]);
+    setAnswers([]);
+    setShowResults(false);
     
     try {
       const reader = new FileReader();
@@ -87,6 +101,7 @@ export default function QuestionGeneratorPage() {
 
         if (result && result.questions.length > 0) {
           setGeneratedQuestions(result.questions);
+          setAnswers(Array(result.questions.length).fill({ selectedOption: null, isCorrect: null }));
           toast({
             title: 'تم إنشاء الأسئلة بنجاح!',
           });
@@ -111,6 +126,19 @@ export default function QuestionGeneratorPage() {
       setIsGenerating(false);
     }
   };
+
+  const handleAnswerSelect = (questionIndex: number, selectedOption: string) => {
+    if(showResults) return;
+
+    const newAnswers = [...answers];
+    const isCorrect = generatedQuestions[questionIndex].correctAnswer === selectedOption;
+    newAnswers[questionIndex] = { selectedOption, isCorrect };
+    setAnswers(newAnswers);
+  };
+  
+  const calculateScore = () => {
+    return answers.filter(a => a.isCorrect).length;
+  }
   
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
@@ -249,31 +277,109 @@ export default function QuestionGeneratorPage() {
             </Alert>
           )}
 
-          {/* This section will be for displaying the generated questions */}
           {generatedQuestions.length > 0 && !isGenerating && (
             <Card>
                 <CardHeader>
                     <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
+                    <CardDescription>
+                      {questionType === 'interactive' ? 'أجب على الأسئلة أدناه واختبر معلوماتك.' : 'استعرض الأسئلة وإجاباتها الصحيحة.'}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-6'>
                     {generatedQuestions.map((q, index) => (
-                        <div key={index} className='space-y-3 p-4 border rounded-lg'>
-                            <p className='font-bold'>{index + 1}. {q.question}</p>
-                            <div className='space-y-2 pr-4'>
-                                {q.options.map((opt, i) => (
-                                    <p key={i} className={`text-sm ${q.correctAnswer === opt ? 'text-green-400 font-semibold' : 'text-muted-foreground'}`}>{opt}</p>
-                                ))}
-                            </div>
+                        <div key={index} className='space-y-4 p-4 border rounded-lg bg-muted/30'>
+                            <p className='font-bold flex items-start gap-2'>
+                              <span>{index + 1}.</span>
+                              <span>{q.question}</span>
+                            </p>
+
                             {questionType === 'fixed' && (
-                                <Alert className='mt-2'>
-                                    <FileText className="h-4 w-4" />
-                                    <AlertTitle>الشرح</AlertTitle>
-                                    <AlertDescription>{q.explanation}</AlertDescription>
-                                </Alert>
+                                <>
+                                  <div className='space-y-2 pr-6'>
+                                      {q.options.map((opt, i) => (
+                                          <p key={i} className={cn("text-sm", q.correctAnswer === opt ? 'text-green-400 font-semibold flex items-center gap-2' : 'text-muted-foreground')}>
+                                             {q.correctAnswer === opt && <CheckCircle className="size-4" />}
+                                             {opt}
+                                          </p>
+                                      ))}
+                                  </div>
+                                  <Alert className='mt-2 bg-background/50'>
+                                      <FileText className="h-4 w-4" />
+                                      <AlertTitle>الشرح</AlertTitle>
+                                      <AlertDescription>{q.explanation}</AlertDescription>
+                                  </Alert>
+                                </>
+                            )}
+                            
+                            {questionType === 'interactive' && (
+                              <>
+                                <RadioGroup 
+                                  value={answers[index]?.selectedOption || ''}
+                                  onValueChange={(value) => handleAnswerSelect(index, value)}
+                                  className='space-y-2 pr-6'
+                                  disabled={showResults}
+                                >
+                                  {q.options.map((option, i) => {
+                                      const answer = answers[index];
+                                      const isSelected = answer?.selectedOption === option;
+                                      const isCorrect = q.correctAnswer === option;
+                                      
+                                      let stateIndicator = null;
+                                      if (showResults && isSelected) {
+                                          stateIndicator = isCorrect 
+                                              ? <CheckCircle className="size-5 text-green-500" /> 
+                                              : <XCircle className="size-5 text-red-500" />;
+                                      } else if (showResults && isCorrect) {
+                                          stateIndicator = <CheckCircle className="size-5 text-green-500" />;
+                                      }
+
+                                      return (
+                                        <Label 
+                                          key={i}
+                                          htmlFor={`q${index}-opt${i}`}
+                                          className={cn(
+                                            "flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors hover:bg-background/50",
+                                            showResults && isCorrect && "border-green-500 bg-green-500/10",
+                                            showResults && isSelected && !isCorrect && "border-red-500 bg-red-500/10"
+                                          )}
+                                        >
+                                          <RadioGroupItem value={option} id={`q${index}-opt${i}`} />
+                                          <span className="flex-1">{option}</span>
+                                          {stateIndicator}
+                                        </Label>
+                                      );
+                                  })}
+                                </RadioGroup>
+                                {showResults && (
+                                  <Alert className={cn('mt-2', answers[index]?.isCorrect ? 'border-green-500/50' : 'border-red-500/50')}>
+                                      <FileText className="h-4 w-4" />
+                                      <AlertTitle className={answers[index]?.isCorrect ? 'text-green-400' : 'text-red-400'}>
+                                        {answers[index]?.isCorrect ? 'إجابة صحيحة!' : 'إجابة خاطئة'}
+                                      </AlertTitle>
+                                      <AlertDescription>{q.explanation}</AlertDescription>
+                                  </Alert>
+                                )}
+                              </>
                             )}
                         </div>
                     ))}
                 </CardContent>
+                {questionType === 'interactive' && (
+                   <CardFooter className="flex-col items-stretch gap-4">
+                     {showResults && (
+                       <Alert variant="default" className="border-primary">
+                          <BrainCircuit className="h-4 w-4" />
+                          <AlertTitle>نتيجتك النهائية</AlertTitle>
+                          <AlertDescription>
+                            لقد حصلت على {calculateScore()} من {generatedQuestions.length} إجابات صحيحة.
+                          </AlertDescription>
+                       </Alert>
+                     )}
+                     <Button size="lg" onClick={() => setShowResults(!showResults)}>
+                       {showResults ? 'إخفاء النتائج' : 'إظهار النتائج'}
+                     </Button>
+                   </CardFooter>
+                )}
             </Card>
           )}
 
@@ -281,4 +387,5 @@ export default function QuestionGeneratorPage() {
       </main>
     </div>
   );
-}
+
+    
