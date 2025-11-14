@@ -17,9 +17,11 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  Download,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import jsPDF from 'jspdf';
 
 type ImageFile = {
   file: File;
@@ -53,6 +55,7 @@ export default function ImageToPdfPage() {
       }
 
       setSelectedImages((prev) => [...prev, ...imageFiles]);
+      setPdfUrl(null);
     }
   };
 
@@ -61,6 +64,18 @@ export default function ImageToPdfPage() {
     const removedImage = newImages.splice(index, 1)[0];
     URL.revokeObjectURL(removedImage.preview); // Clean up memory
     setSelectedImages(newImages);
+    if (newImages.length === 0) {
+      setPdfUrl(null);
+    }
+  };
+  
+  const readImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const convertToPdf = async () => {
@@ -77,16 +92,42 @@ export default function ImageToPdfPage() {
     setPdfUrl(null);
 
     try {
-      // In a real app, you'd send images to a server or use a wasm library
-      // For now, we simulate a delay and don't actually generate a PDF
-      // to keep it client-side and simple for this step.
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      for (let i = 0; i < selectedImages.length; i++) {
+        const image = selectedImages[i];
+        const imageDataUrl = await readImageFile(image.file);
+        
+        const img = document.createElement('img');
+        img.src = imageDataUrl;
+        await new Promise(resolve => { img.onload = resolve; });
+
+        const imgWidth = img.naturalWidth;
+        const imgHeight = img.naturalHeight;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        
+        const finalWidth = imgWidth * ratio;
+        const finalHeight = imgHeight * ratio;
+
+        const x = (pdfWidth - finalWidth) / 2;
+        const y = (pdfHeight - finalHeight) / 2;
+
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(imageDataUrl, 'JPEG', x, y, finalWidth, finalHeight);
+      }
       
-      // The actual PDF generation will be added in the next step.
-      // For now, we'll just show a success message.
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfUrl(url);
+
       toast({
-        title: 'قيد التطوير',
-        description: 'سيتم تنفيذ وظيفة تحويل PDF الفعلية قريبًا.',
+        title: 'تم التحويل بنجاح!',
+        description: 'ملف PDF الخاص بك جاهز للتنزيل.',
       });
 
     } catch (error) {
@@ -100,6 +141,17 @@ export default function ImageToPdfPage() {
       setIsConverting(false);
     }
   };
+
+  const handleDownload = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = `${fileName.trim() || 'converted-file'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
@@ -135,7 +187,7 @@ export default function ImageToPdfPage() {
           {selectedImages.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>الصور المختارة</CardTitle>
+                <CardTitle>الصور المختارة ({selectedImages.length})</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {selectedImages.map((image, index) => (
@@ -161,7 +213,7 @@ export default function ImageToPdfPage() {
               <CardFooter className="flex flex-col sm:flex-row items-center gap-4 border-t pt-6">
                 <div className="flex-1 w-full">
                   <Input
-                    placeholder="أدخل اسم الملف (اختياري)..."
+                    placeholder="أدخل اسم الملف..."
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                     className="max-w-xs"
@@ -184,12 +236,16 @@ export default function ImageToPdfPage() {
             </Card>
           )}
 
-          {isConverting && (
-            <Alert>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <AlertTitle>جاري التحويل إلى PDF...</AlertTitle>
-              <AlertDescription>
-                يرجى الانتظار، قد يستغرق هذا بعض الوقت.
+          {pdfUrl && !isConverting && (
+             <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>ملف PDF جاهز!</AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                <span>يمكنك الآن تنزيل ملفك.</span>
+                 <Button onClick={handleDownload} size="sm">
+                  <Download className="ml-2 h-4 w-4" />
+                  تنزيل
+                </Button>
               </AlertDescription>
             </Alert>
           )}
