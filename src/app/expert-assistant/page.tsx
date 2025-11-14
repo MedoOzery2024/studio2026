@@ -1,13 +1,23 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Paperclip, Send, User, Bot, CornerDownLeft, File as FileIcon, X, Copy } from 'lucide-react';
+import { Paperclip, Send, User, Bot, CornerDownLeft, File as FileIcon, X, Copy, Mic, Volume2, Download, Trash2, Loader2 } from 'lucide-react';
 import { chat, ChatInput } from '@/ai/flows/chat';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { textToSpeechSimple } from '@/ai/flows/text-to-speech-simple';
+
+
+// Add SpeechRecognition types for window object
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 type Message = {
   id: number;
@@ -28,6 +38,65 @@ export default function ExpertAssistantPage() {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // Speech Recognition state
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Text-to-Speech state
+  const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+
+  useEffect(() => {
+    // Initialize Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.lang = 'ar-SA';
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        toast({
+            variant: "destructive",
+            title: "خطأ في التعرف على الصوت",
+            description: "لم نتمكن من معالجة الصوت. يرجى المحاولة مرة أخرى."
+        });
+        setIsListening(false);
+      };
+      
+       recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, [toast]);
+  
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+       if (recognitionRef.current) {
+         recognitionRef.current.start();
+         setIsListening(true);
+       } else {
+          toast({
+            variant: "destructive",
+            title: "الميزة غير مدعومة",
+            description: "متصفحك لا يدعم ميزة التعرف على الصوت."
+          });
+       }
+    }
+  };
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -107,6 +176,58 @@ export default function ExpertAssistantPage() {
     });
   };
 
+  const playAudio = async (message: Message) => {
+     if (playingAudioId === message.id) {
+      audioRef.current?.pause();
+      setPlayingAudioId(null);
+      return;
+    }
+    
+    setPlayingAudioId(message.id);
+    try {
+        const { audioDataUri } = await textToSpeechSimple({ text: message.text });
+        if(audioRef.current) {
+            audioRef.current.pause();
+        }
+        const audio = new Audio(audioDataUri);
+        audioRef.current = audio;
+        audio.play();
+        audio.onended = () => {
+            setPlayingAudioId(null);
+        };
+    } catch (error) {
+        console.error("TTS Error:", error);
+        toast({ variant: 'destructive', title: "خطأ في تشغيل الصوت" });
+        setPlayingAudioId(null);
+    }
+  }
+  
+  const exportChat = () => {
+    const chatContent = messages.map(msg => `${msg.sender === 'user' ? 'أنت' : 'Mahmoud.AI'}: ${msg.text}`).join('\n\n');
+    const blob = new Blob([chatContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'chat_history.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const clearChat = () => {
+    setMessages([
+      {
+        id: 1,
+        sender: 'ai',
+        text: 'مرحباً! أنا مساعد محمود الذكي. كيف يمكنني مساعدتك اليوم؟',
+      },
+    ]);
+    setInput('');
+    setFile(null);
+    toast({ title: "تم حذف المحادثة" });
+  };
+
+
   return (
     <div className="flex h-screen flex-col bg-background" dir="rtl">
         <header className="flex h-16 items-center justify-between border-b border-white/10 px-4 md:px-6 shrink-0">
@@ -120,10 +241,20 @@ export default function ExpertAssistantPage() {
               مساعد الخبراء
             </h1>
         </div>
-        <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
-          <CornerDownLeft className="h-5 w-5" />
-          <span className="sr-only">العودة</span>
-        </Link>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportChat} disabled={messages.length <= 1}>
+                <Download className="ml-2 h-4 w-4" />
+                تصدير
+            </Button>
+             <Button variant="destructive" size="sm" onClick={clearChat} disabled={messages.length <= 1}>
+                <Trash2 className="ml-2 h-4 w-4" />
+                حذف
+            </Button>
+            <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+              <CornerDownLeft className="h-5 w-5" />
+              <span className="sr-only">العودة</span>
+            </Link>
+        </div>
       </header>
       <main className="flex-1 overflow-y-auto p-4">
         <div className="space-y-6 max-w-3xl mx-auto">
@@ -149,14 +280,25 @@ export default function ExpertAssistantPage() {
                 }`}
               >
                 {message.sender === 'ai' && (
-                   <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-2 left-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleCopy(message.text)}
-                   >
-                     <Copy className="h-4 w-4" />
-                   </Button>
+                  <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6"
+                        onClick={() => playAudio(message)}
+                        disabled={playingAudioId !== null && playingAudioId !== message.id}
+                      >
+                         {playingAudioId === message.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Volume2 className="h-4 w-4" />}
+                      </Button>
+                       <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6"
+                        onClick={() => handleCopy(message.text)}
+                       >
+                         <Copy className="h-4 w-4" />
+                       </Button>
+                  </div>
                 )}
                 <p className="whitespace-pre-wrap">{message.text}</p>
               </div>
@@ -199,14 +341,17 @@ export default function ExpertAssistantPage() {
             </div>
           )}
           <Input
-            placeholder="اكتب رسالتك هنا..."
-            className="h-12 pr-28 pl-4 bg-muted/50 border-border focus-visible:ring-primary"
+            placeholder="اكتب رسالتك هنا أو استخدم الميكروفون..."
+            className="h-12 pr-40 pl-4 bg-muted/50 border-border focus-visible:ring-primary"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={isLoading}
+            disabled={isLoading || isListening}
           />
           <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+             <Button variant={isListening ? "destructive" : "ghost"} size="icon" className="text-muted-foreground hover:text-foreground" onClick={toggleListening} disabled={isLoading}>
+              <Mic className="h-5 w-5" />
+            </Button>
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
               <Paperclip className="h-5 w-5" />
             </Button>
@@ -217,7 +362,7 @@ export default function ExpertAssistantPage() {
                 onChange={handleFileSelect}
                 disabled={isLoading}
               />
-            <Button size="icon" onClick={handleSend} disabled={(!input.trim() && !file) || isLoading}>
+            <Button size="icon" onClick={handleSend} disabled={(!input.trim() && !file) || isLoading || isListening}>
               <Send className="h-5 w-5" />
             </Button>
           </div>
