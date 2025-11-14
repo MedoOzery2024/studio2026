@@ -3,8 +3,6 @@
  * @fileOverview A flow for generating video from text or image content.
  *
  * - generateVideo - Handles the video generation process.
- * - GenerateVideoInput - The input type for the function.
- * - GenerateVideoOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,27 +10,23 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { MediaPart } from 'genkit';
 
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-const GenerateVideoInputSchema = z.object({
-  prompt: z.string().describe("A text description of the desired video content."),
-  fileDataUri: z.string().optional().describe(
-    "An optional content file (image, PDF, or text) to base the video on, as a data URI."
-  ),
-  durationSeconds: z.number().default(5).describe("The duration of the video in seconds."),
-  aspectRatio: z.string().default('16:9').describe("The aspect ratio of the video."),
-});
-export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
+export type GenerateVideoInput = {
+  prompt: string;
+  fileDataUri?: string;
+  durationSeconds: number;
+  aspectRatio: string;
+};
 
-const GenerateVideoOutputSchema = z.object({
-  videoUrl: z.string().describe("The data URI of the generated video."),
-});
-export type GenerateVideoOutput = z.infer<typeof GenerateVideoOutputSchema>;
-
+export type GenerateVideoOutput = {
+  videoUrl: string;
+};
 
 export async function generateVideo(input: GenerateVideoInput): Promise<GenerateVideoOutput> {
     const { prompt, fileDataUri, durationSeconds, aspectRatio } = input;
     
-    // Determine the prompt parts
     const promptParts: (string | MediaPart)[] = [{text: prompt}];
     let extractedText = '';
 
@@ -41,7 +35,6 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
       if (mimeType.startsWith('image')) {
          promptParts.push({ media: { url: fileDataUri, contentType: mimeType } });
       } else {
-        // If it's a PDF or text file, first extract text
         const textResponse = await ai.generate({
           model: 'googleai/gemini-2.5-pro',
           prompt: [
@@ -51,7 +44,6 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
         });
         extractedText = textResponse.text;
         
-        // Add the extracted text to the main prompt
         const combinedPrompt = `Based on the following text, ${prompt}\n\nText: """${extractedText}"""`;
         promptParts[0] = {text: combinedPrompt};
       }
@@ -73,7 +65,6 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
 
     // Poll for completion
     while (!operation.done) {
-        // Wait for 5 seconds before checking the status again.
         await new Promise((resolve) => setTimeout(resolve, 5000));
         operation = await ai.checkOperation(operation);
     }
@@ -87,8 +78,6 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
         throw new Error('Failed to find the generated video in the operation result.');
     }
 
-    // The URL returned is temporary and requires the API key for access.
-    // We will fetch it server-side and return it as a data URI.
     const fetch = (await import('node-fetch')).default;
     const videoDownloadResponse = await fetch(
         `${videoPart.media.url}&key=${process.env.GEMINI_API_KEY}`

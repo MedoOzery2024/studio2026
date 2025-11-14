@@ -10,25 +10,32 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const GeneratePresentationInputSchema = z.object({
-  fileDataUri: z.string().describe(
-    "The content file (image or PDF) as a data URI."
-  ),
-});
-export type GeneratePresentationInput = z.infer<typeof GeneratePresentationInputSchema>;
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-const SlideSchema = z.object({
-  title: z.string().describe('The title for this slide.'),
-  points: z.array(z.string()).describe('An array of bullet points for the slide body.'),
-});
+export type GeneratePresentationInput = {
+  fileDataUri: string;
+};
 
-const GeneratePresentationOutputSchema = z.object({
-  title: z.string().describe('The main title for the entire presentation.'),
-  slides: z.array(SlideSchema).describe('An array of slides.'),
-});
-export type GeneratePresentationOutput = z.infer<typeof GeneratePresentationOutputSchema>;
+export type GeneratePresentationOutput = {
+  title: string;
+  slides: {
+    title: string;
+    points: string[];
+  }[];
+};
 
 export async function generatePresentation(input: GeneratePresentationInput): Promise<GeneratePresentationOutput> {
+    const SlideSchema = z.object({
+      title: z.string().describe('The title for this slide.'),
+      points: z.array(z.string()).describe('An array of bullet points for the slide body.'),
+    });
+
+    const GeneratePresentationOutputSchema = z.object({
+      title: z.string().describe('The main title for the entire presentation.'),
+      slides: z.array(SlideSchema).describe('An array of slides.'),
+    });
+    
     const { fileDataUri } = input;
     
     const prompt = `Analyze the provided content and generate a structured presentation.

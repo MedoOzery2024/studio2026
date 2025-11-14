@@ -10,19 +10,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const GenerateMindMapInputSchema = z.object({
-  fileDataUri: z.string().describe(
-    "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-  ),
-});
-export type GenerateMindMapInput = z.infer<typeof GenerateMindMapInputSchema>;
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-// We define a recursive schema for the mind map nodes
-const MindMapNodeSchema: z.ZodType<MindMapNode> = z.object({
-    title: z.string().describe('The main idea or title of this node.'),
-    details: z.string().describe('Detailed information or explanation for this node.'),
-    subIdeas: z.array(z.lazy(() => MindMapNodeSchema)).optional().describe('An array of nested sub-ideas.'),
-});
+export type GenerateMindMapInput = {
+  fileDataUri: string;
+};
 
 export type MindMapNode = {
   title: string;
@@ -30,11 +23,16 @@ export type MindMapNode = {
   subIdeas?: MindMapNode[];
 };
 
-const GenerateMindMapOutputSchema = MindMapNodeSchema;
-export type GenerateMindMapOutput = z.infer<typeof GenerateMindMapOutputSchema>;
+export async function generateMindMap(input: GenerateMindMapInput): Promise<MindMapNode> {
+    // We define a recursive schema for the mind map nodes
+    const MindMapNodeSchema: z.ZodType<MindMapNode> = z.object({
+        title: z.string().describe('The main idea or title of this node.'),
+        details: z.string().describe('Detailed information or explanation for this node.'),
+        subIdeas: z.array(z.lazy(() => MindMapNodeSchema)).optional().describe('An array of nested sub-ideas.'),
+    });
 
-
-export async function generateMindMap(input: GenerateMindMapInput): Promise<GenerateMindMapOutput> {
+    const GenerateMindMapOutputSchema = MindMapNodeSchema;
+    
     const { fileDataUri } = input;
     
     const prompt = `Analyze the provided content and generate a hierarchical mind map structure.

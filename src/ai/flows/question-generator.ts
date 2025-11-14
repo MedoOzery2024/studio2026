@@ -10,34 +10,40 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-const QuestionSchema = z.object({
-  question: z.string().describe('The question text.'),
-  options: z.array(z.string()).describe('An array of 4 possible answers.'),
-  correctAnswer: z.string().describe('The correct answer from the options.'),
-  explanation: z.string().describe('An explanation for why the answer is correct.'),
-});
-export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
+export type GeneratedQuestion = {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+};
 
+export type GenerateQuestionsInput = {
+  fileDataUri: string;
+  questionType: 'interactive' | 'fixed';
+  numQuestions: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+};
 
-const GenerateQuestionsInputSchema = z.object({
-  fileDataUri: z.string().describe(
-    "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-  ),
-  questionType: z.enum(['interactive', 'fixed']).describe('The type of questions to generate.'),
-  numQuestions: z.number().describe('The number of questions to generate.'),
-  difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the questions.'),
-});
-export type GenerateQuestionsInput = z.infer<typeof GenerateQuestionsInputSchema>;
-
-const GenerateQuestionsOutputSchema = z.object({
-  questions: z.array(QuestionSchema).describe('The array of generated questions.'),
-});
-export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
-
+export type GenerateQuestionsOutput = {
+  questions: GeneratedQuestion[];
+};
 
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
-    const { fileDataUri, numQuestions, difficulty, questionType } = input;
+    const QuestionSchema = z.object({
+      question: z.string().describe('The question text.'),
+      options: z.array(z.string()).describe('An array of 4 possible answers.'),
+      correctAnswer: z.string().describe('The correct answer from the options.'),
+      explanation: z.string().describe('An explanation for why the answer is correct.'),
+    });
+
+    const GenerateQuestionsOutputSchema = z.object({
+      questions: z.array(QuestionSchema).describe('The array of generated questions.'),
+    });
+
+    const { fileDataUri, numQuestions, difficulty } = input;
     
     let promptText = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
@@ -49,7 +55,6 @@ For each question, provide:
 3. The correct answer from the options.
 4. A brief explanation for the correct answer.
 If the content is in English, options should be labeled A, B, C, D. If in Arabic, use أ, ب, ج, د.`;
-
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-pro',

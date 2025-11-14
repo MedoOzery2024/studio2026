@@ -68,7 +68,7 @@ export default function QuestionGeneratorPage() {
     return () => {
       if (timerId) clearInterval(timerId);
     };
-  }, [isTestStarted, remainingTime, showResults]);
+  }, [isTestStarted, remainingTime, showResults, timerId, toast]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {

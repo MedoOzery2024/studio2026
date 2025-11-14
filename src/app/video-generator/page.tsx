@@ -24,7 +24,7 @@ import { generateVideo, GenerateVideoInput } from '@/ai/flows/video-generator';
 export default function VideoGeneratorPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   

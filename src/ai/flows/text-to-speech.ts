@@ -3,27 +3,23 @@
  * @fileOverview A flow for converting text from a document to speech.
  *
  * - textToSpeech - A function that handles the text-to-speech conversion.
- * - TextToSpeechInput - The input type for the function.
- * - TextToSpeechOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { z } from 'genkit';
 import wav from 'wav';
 
-const TextToSpeechInputSchema = z.object({
-  fileDataUri: z.string().describe(
-    "The content file (image or PDF) as a data URI that must include a MIME type and use Base64 encoding."
-  ),
-  voice: z.enum(['male', 'female']).describe('The desired voice for the speech output.'),
-});
-export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-const TextToSpeechOutputSchema = z.object({
-  audioDataUri: z.string().describe("The generated audio as a data URI in WAV format."),
-});
-export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
+export type TextToSpeechInput = {
+  fileDataUri: string;
+  voice: 'male' | 'female';
+};
+
+export type TextToSpeechOutput = {
+  audioDataUri: string;
+};
 
 
 async function toWav(
@@ -53,7 +49,6 @@ async function toWav(
   });
 }
 
-
 export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
     // 1. Extract text from the document
     const { fileDataUri, voice } = input;
@@ -71,7 +66,6 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     }
     
     // 2. Convert the extracted text to speech
-    // The new TTS model uses codenames. We'll pick voices that sound male/female.
     const voiceName = voice === 'male' ? 'puck' : 'rasalgethi';
 
     const { media } = await ai.generate({

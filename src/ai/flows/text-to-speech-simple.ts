@@ -4,25 +4,22 @@
  * This is used for playing back chat messages.
  *
  * - textToSpeechSimple - A function that handles the text-to-speech conversion.
- * - TextToSpeechSimpleInput - The input type for the function.
- * - TextToSpeechSimpleOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { z } from 'genkit';
 import wav from 'wav';
 
-const TextToSpeechSimpleInputSchema = z.object({
-  text: z.string().describe("The text to convert to speech."),
-});
-export type TextToSpeechSimpleInput = z.infer<typeof TextToSpeechSimpleInputSchema>;
+// Input and Output schemas are now defined inside the function
+// to comply with Next.js Server Action conventions.
 
-const TextToSpeechSimpleOutputSchema = z.object({
-  audioDataUri: z.string().describe("The generated audio as a data URI in WAV format."),
-});
-export type TextToSpeechSimpleOutput = z.infer<typeof TextToSpeechSimpleOutputSchema>;
+export type TextToSpeechSimpleInput = {
+  text: string;
+};
 
+export type TextToSpeechSimpleOutput = {
+  audioDataUri: string;
+};
 
 async function toWav(
   pcmData: Buffer,
@@ -51,7 +48,6 @@ async function toWav(
   });
 }
 
-
 export async function textToSpeechSimple(input: TextToSpeechSimpleInput): Promise<TextToSpeechSimpleOutput> {
     const { text } = input;
     
@@ -59,8 +55,6 @@ export async function textToSpeechSimple(input: TextToSpeechSimpleInput): Promis
         throw new Error("Input text cannot be empty.");
     }
     
-    // The new TTS model uses codenames for voices. We'll pick one.
-    // 'rasalgethi' is a pleasant female-sounding voice.
     const voiceName = 'rasalgethi';
 
     const { media } = await ai.generate({

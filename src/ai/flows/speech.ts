@@ -10,19 +10,18 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const SpeechToTextAndSummarizeInputSchema = z.object({
-  audioDataUri: z.string().describe(
-    "An audio recording, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. Can be an empty string if existingText is provided."
-  ),
-  existingText: z.string().optional().describe('Existing text to summarize directly, bypassing transcription.')
-});
-export type SpeechToTextAndSummarizeInput = z.infer<typeof SpeechToTextAndSummarizeInputSchema>;
+// Input and Output types are now defined directly
+// to comply with Next.js Server Action conventions.
 
-const SpeechToTextAndSummarizeOutputSchema = z.object({
-  transcription: z.string().describe('The transcribed text from the audio.'),
-  summary: z.string().describe('The summary of the transcribed text.'),
-});
-export type SpeechToTextAndSummarizeOutput = z.infer<typeof SpeechToTextAndSummarizeOutputSchema>;
+export type SpeechToTextAndSummarizeInput = {
+  audioDataUri: string;
+  existingText?: string;
+};
+
+export type SpeechToTextAndSummarizeOutput = {
+  transcription: string;
+  summary: string;
+};
 
 export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeInput): Promise<SpeechToTextAndSummarizeOutput> {
     let transcription = input.existingText || '';

@@ -9,19 +9,18 @@
 
 import {ai} from '@/ai/genkit';
 import { Message, Role, Part} from 'genkit';
-import {z} from 'genkit';
 
-const ChatInputSchema = z.object({
-  history: z.array(z.object({
-    role: z.enum(['user', 'model']),
-    content: z.string(),
-  })).describe('The chat history.'),
-  prompt: z.string().describe('The user\'s message.'),
-  fileDataUri: z.string().optional().describe(
-    "An optional file (image, PDF, etc.) as a data URI to provide context for the prompt."
-  ),
-});
-export type ChatInput = z.infer<typeof ChatInputSchema>;
+// Input and Output types are now defined directly
+// to comply with Next.js Server Action conventions.
+
+export type ChatInput = {
+  history: {
+    role: 'user' | 'model';
+    content: string;
+  }[];
+  prompt: string;
+  fileDataUri?: string;
+};
 
 export type ChatOutput = string;
 
@@ -31,7 +30,6 @@ function toGenkitMessages(history: ChatInput['history']): Message[] {
         content: [{ text: msg.content }],
     }));
 }
-
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {
     const history = toGenkitMessages(input.history);
