@@ -10,9 +10,6 @@ import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 
-// Input and Output schemas are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
 export type TextToSpeechSimpleInput = {
   text: string;
 };
@@ -55,7 +52,7 @@ export async function textToSpeechSimple(input: TextToSpeechSimpleInput): Promis
         throw new Error("Input text cannot be empty.");
     }
     
-    const voiceName = 'rasalgethi';
+    const voiceName = 'puck'; // Changed to a male voice
 
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
