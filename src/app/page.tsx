@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines, BarChart3, Presentation } from "lucide-react";
+import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines, BarChart3, Presentation, Copy } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -77,6 +77,12 @@ export default function Home() {
             title="تحويل المحتوى إلى PowerPoint"
             description="إنشاء عرض تقديمي من محتوى الصور وملفات PDF."
             icon={<Presentation className="size-8 text-primary/80" />}
+          />
+           <FeatureCard
+            href="/file-copier"
+            title="ناسخ الملفات"
+            description="انسخ أي ملف (صور، PDF، Word، إلخ) وقم بتنزيله."
+            icon={<Copy className="size-8 text-primary/80" />}
           />
         </div>
       </div>
