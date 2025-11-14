@@ -10,12 +10,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
 const AnalyzeChartInputSchema = z.object({
   fileDataUri: z.string().describe(
     "The content file (image or PDF) containing a chart, as a data URI."
   ),
 });
+export type AnalyzeChartInput = z.infer<typeof AnalyzeChartInputSchema>;
 
 const TableRowSchema = z.array(z.string());
 const AnalyzeChartOutputSchema = z.object({
