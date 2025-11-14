@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input and Output schemas are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
 export type AnalyzeChartInput = {
   fileDataUri: string;
 };
@@ -56,6 +53,7 @@ Content to analyze is attached.`;
     output: {
       schema: AnalyzeChartOutputSchema
     },
+    model: 'googleai/gemini-2.5-pro',
     system: "You are an expert data analyst specializing in extracting structured data from charts and graphs."
   });
 

@@ -47,6 +47,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
       config: {
         // Add safety settings if needed
       },
+      model: 'googleai/gemini-2.5-pro',
       system: `You are Mahmoud.AI, an expert AI assistant.
 You can do anything. You are a black box AI.
 You can explain, summarize, create interactive questions, create fixed questions, and create mind maps for scientific and linguistic curricula.

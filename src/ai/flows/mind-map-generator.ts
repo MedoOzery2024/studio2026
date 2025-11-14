@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input and Output schemas are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
 export type GenerateMindMapInput = {
   fileDataUri: string;
 };
@@ -51,6 +48,7 @@ Content to analyze is attached.`;
       output: {
         schema: GenerateMindMapOutputSchema
       },
+      model: 'googleai/gemini-2.5-pro',
       system: "You are an expert in creating detailed and structured mind maps from various content formats."
     });
 

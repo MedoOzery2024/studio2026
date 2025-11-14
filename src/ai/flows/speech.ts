@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input and Output types are now defined directly
-// to comply with Next.js Server Action conventions.
-
 export type SpeechToTextAndSummarizeInput = {
   audioDataUri: string;
   existingText?: string;
@@ -32,6 +29,7 @@ export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeIn
                 { text: "Transcribe the following audio recording in Arabic. Provide only the transcribed text, with no additional commentary." },
                 { media: { url: input.audioDataUri } }
             ],
+            model: 'googleai/gemini-2.5-pro',
         });
         transcription = transcribeResponse.text;
     }
@@ -42,7 +40,8 @@ export async function speechToTextAndSummarize(input: SpeechToTextAndSummarizeIn
 
     const summarizeResponse = await ai.generate({
         prompt: `Please provide a concise summary in Arabic for the following text:\n\n${transcription}`,
-        system: 'You are an expert summarizer.'
+        system: 'You are an expert summarizer.',
+        model: 'googleai/gemini-2.5-pro',
     });
     
     const summary = summarizeResponse.text;

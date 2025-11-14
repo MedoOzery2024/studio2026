@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input and Output schemas are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
 export type GeneratedQuestion = {
   question: string;
   options: string[];
@@ -64,6 +61,7 @@ If the content is in English, options should be labeled A, B, C, D. If in Arabic
       output: {
         schema: GenerateQuestionsOutputSchema
       },
+      model: 'googleai/gemini-2.5-pro',
       system: "You are an expert in creating educational materials and exam questions from provided content."
     });
 

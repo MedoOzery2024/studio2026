@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Input and Output schemas are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
 export type GeneratePresentationInput = {
   fileDataUri: string;
 };
@@ -55,6 +52,7 @@ Content to analyze is attached.`;
       output: {
         schema: GeneratePresentationOutputSchema
       },
+      model: 'googleai/gemini-2.5-pro',
       system: "You are an expert in summarizing documents and creating structured PowerPoint presentations."
     });
 
