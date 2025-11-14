@@ -11,9 +11,18 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, BarChart3, Loader2, AlertCircle, Download, Table } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Upload, FileUp, BarChart3, Loader2, AlertCircle, Download, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { analyzeChart, AnalyzeChartInput, AnalyzeChartOutput } from '@/ai/flows/chart-analyzer';
 
 export default function ChartAnalyzerPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +31,7 @@ export default function ChartAnalyzerPage() {
   const { toast } = useToast();
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalyzeChartOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,11 +66,39 @@ export default function ChartAnalyzerPage() {
     setError(null);
     setAnalysisResult(null);
 
-    // Placeholder for AI logic
-    setTimeout(() => {
-        setError("ميزة تحليل الرسوم البيانية قيد التطوير حاليًا.");
+     try {
+       const reader = new FileReader();
+       reader.readAsDataURL(file);
+       reader.onloadend = async () => {
+          const base64Data = reader.result as string;
+          const input: AnalyzeChartInput = { fileDataUri: base64Data };
+          
+          const result = await analyzeChart(input);
+
+          if (result) {
+            setAnalysisResult(result);
+            toast({
+              title: 'تم تحليل الرسم البياني بنجاح!',
+              description: 'يمكنك الآن استعراض البيانات المستخرجة.',
+            });
+          } else {
+             setError('لم يتمكن الذكاء الاصطناعي من تحليل الرسم البياني. حاول مرة أخرى بملف مختلف.');
+          }
+       }
+       reader.onerror = () => {
+         throw new Error('فشل في قراءة الملف.');
+       }
+    } catch(e: any) {
+        console.error("Error analyzing chart:", e);
+        setError(e.message || 'حدث خطأ غير متوقع أثناء تحليل الرسم البياني.');
+        toast({
+            variant: 'destructive',
+            title: 'فشل التحليل',
+            description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+        });
+    } finally {
         setIsAnalyzing(false);
-    }, 2000);
+    }
   };
   
   return (
@@ -143,12 +180,43 @@ export default function ChartAnalyzerPage() {
           {analysisResult && !isAnalyzing && (
             <Card>
                 <CardHeader>
-                    <CardTitle>نتائج التحليل</CardTitle>
+                    <CardTitle>{analysisResult.title}</CardTitle>
                     <CardDescription>هذه هي البيانات المستخرجة من الرسم البياني.</CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-6 border-t pt-6'>
-                    {/* Placeholder for table and analysis text */}
-                    <p>سيتم عرض الجدول والتحليل هنا.</p>
+                    <div className='space-y-3'>
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                           <FileText className='size-5 text-primary'/>
+                           ملخص التحليل
+                        </h3>
+                        <p className='text-muted-foreground'>{analysisResult.summary}</p>
+                    </div>
+                     <div className='space-y-3'>
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Table className='size-5 text-primary'/>
+                            جدول البيانات
+                        </h3>
+                         <div className='border rounded-lg overflow-hidden'>
+                             <Table>
+                                 <TableHeader>
+                                     <TableRow>
+                                         {analysisResult.table.headers.map((header, index) => (
+                                             <TableHead key={index}>{header}</TableHead>
+                                         ))}
+                                     </TableRow>
+                                 </TableHeader>
+                                 <TableBody>
+                                     {analysisResult.table.rows.map((row, rowIndex) => (
+                                         <TableRow key={rowIndex}>
+                                             {row.map((cell, cellIndex) => (
+                                                 <TableCell key={cellIndex}>{cell}</TableCell>
+                                             ))}
+                                         </TableRow>
+                                     ))}
+                                 </TableBody>
+                             </Table>
+                         </div>
+                    </div>
                 </CardContent>
                 <CardFooter className="flex gap-4">
                   <Button variant="outline" disabled>
