@@ -48,7 +48,6 @@ export async function generatePresentation(input: GeneratePresentationInput): Pr
 Content to analyze is attached.`;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: prompt },
         { media: { url: fileDataUri } }

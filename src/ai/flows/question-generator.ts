@@ -57,7 +57,6 @@ For each question, provide:
 If the content is in English, options should be labeled A, B, C, D. If in Arabic, use أ, ب, ج, د.`;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: promptText },
         { media: { url: fileDataUri } }

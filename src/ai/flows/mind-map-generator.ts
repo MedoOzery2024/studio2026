@@ -44,7 +44,6 @@ The entire response must be in the same language as the provided document (e.g.,
 Content to analyze is attached.`;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: prompt },
         { media: { url: fileDataUri } }

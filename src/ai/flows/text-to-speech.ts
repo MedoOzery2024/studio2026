@@ -53,7 +53,6 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     // 1. Extract text from the document
     const { fileDataUri, voice } = input;
     const textResponse = await ai.generate({
-      model: 'googleai/gemini-2.5-pro',
       prompt: [
         { text: "Extract all text from the following document. Respond only with the extracted text, no additional commentary. The entire response must be in the same language as the provided document (e.g., Arabic or English)." },
         { media: { url: fileDataUri } }
