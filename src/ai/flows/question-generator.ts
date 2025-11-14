@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { Part } from 'genkit';
 
 const QuestionSchema = z.object({
   question: z.string().describe('The question text.'),
@@ -41,10 +42,10 @@ export async function generateQuestions(input: GenerateQuestionsInput): Promise<
       inputSchema: GenerateQuestionsInputSchema,
       outputSchema: GenerateQuestionsOutputSchema,
     },
-    async (input) => {
-      const { fileDataUri, numQuestions, difficulty, questionType } = input;
+    async (flowInput) => {
+      const { fileDataUri, numQuestions, difficulty, questionType } = flowInput;
       
-      const prompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
+      const textPrompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
 The question type is '${questionType}'.
 For each question, provide:
@@ -55,12 +56,16 @@ For each question, provide:
 
 The entire response must be in the same language as the provided document (Arabic or English).
 
-Content to analyze:
-{{media url=fileDataUri}}`;
+Content to analyze is attached.`;
+
+      const promptParts: Part[] = [
+        { text: textPrompt },
+        { media: { url: fileDataUri } }
+      ];
   
       const response = await ai.generate({
         model: 'googleai/gemini-2.5-flash',
-        prompt: [ {text: prompt.replace('{{media url=fileDataUri}}', '')}, {media: {url: fileDataUri}}],
+        prompt: promptParts,
         output: {
           schema: GenerateQuestionsOutputSchema
         },
