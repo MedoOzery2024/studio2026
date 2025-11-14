@@ -20,11 +20,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuestions, GenerateQuestionsInput, GenerateQuestionsOutput, GeneratedQuestion } from '@/ai/flows/question-generator';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+
 
 type AnswerState = {
   selectedOption: string | null;
   isCorrect: boolean | null;
 };
+
+const BATCH_SIZE = 10;
 
 export default function QuestionGeneratorPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -44,6 +48,7 @@ export default function QuestionGeneratorPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState(0);
   
   // Interactive state
   const [answers, setAnswers] = useState<AnswerState[]>([]);
@@ -108,42 +113,53 @@ export default function QuestionGeneratorPage() {
     setAnswers([]);
     setShowResults(false);
     setIsTestStarted(false);
+    setGenerationProgress(0);
      if(timerId) clearInterval(timerId);
     
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = async () => {
-        const base64Data = reader.result as string;
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+      });
+      
+      let allQuestions: GeneratedQuestion[] = [];
+      const totalBatches = Math.ceil(numQuestions / BATCH_SIZE);
+
+      for (let i = 0; i < totalBatches; i++) {
+        const questionsInBatch = Math.min(BATCH_SIZE, numQuestions - allQuestions.length);
         
         const input: GenerateQuestionsInput = {
           fileDataUri: base64Data,
           questionType,
-          numQuestions,
+          numQuestions: questionsInBatch,
           difficulty,
         };
 
         const result = await generateQuestions(input);
-
+        
         if (result && result.questions.length > 0) {
-          setGeneratedQuestions(result.questions);
-          setAnswers(Array(result.questions.length).fill({ selectedOption: null, isCorrect: null }));
-          toast({
-            title: 'تم إنشاء الأسئلة بنجاح!',
-          });
-          if(questionType === 'interactive'){
-            const totalSeconds = timerSettings.hours * 3600 + timerSettings.minutes * 60 + timerSettings.seconds;
-            setRemainingTime(totalSeconds);
-            setIsTestStarted(true);
-          }
+            allQuestions = [...allQuestions, ...result.questions];
+            setGeneratedQuestions(allQuestions);
+            setGenerationProgress(((i + 1) / totalBatches) * 100);
         } else {
-          setError('لم يتمكن الذكاء الاصطناعي من إنشاء أسئلة من هذا المحتوى. حاول مرة أخرى بملف مختلف.');
+            // If one batch fails, we can either stop or continue. Let's stop.
+            throw new Error(`فشل إنشاء الدفعة ${i+1}. حاول مرة أخرى.`);
         }
-      };
+      }
+
+      setGeneratedQuestions(allQuestions.slice(0, numQuestions)); // Ensure exact number of questions
+      setAnswers(Array(allQuestions.slice(0, numQuestions).length).fill({ selectedOption: null, isCorrect: null }));
+      toast({
+        title: 'تم إنشاء الأسئلة بنجاح!',
+      });
       
-      reader.onerror = () => {
-        throw new Error('فشل في قراءة الملف.');
-      };
+      if(questionType === 'interactive'){
+        const totalSeconds = timerSettings.hours * 3600 + timerSettings.minutes * 60 + timerSettings.seconds;
+        setRemainingTime(totalSeconds);
+        setIsTestStarted(true);
+      }
 
     } catch (e: any) {
       console.error('Error generating questions:', e);
@@ -151,12 +167,14 @@ export default function QuestionGeneratorPage() {
       toast({
         variant: 'destructive',
         title: 'فشل الإنشاء',
-        description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+        description: e.message || 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
       });
     } finally {
       setIsGenerating(false);
+      setGenerationProgress(0);
     }
   };
+
 
   const handleAnswerSelect = (questionIndex: number, selectedOption: string) => {
     if(showResults) return;
@@ -318,11 +336,28 @@ export default function QuestionGeneratorPage() {
             </Alert>
           )}
 
+           {isGenerating && (
+            <Card className="print:hidden">
+              <CardHeader>
+                <CardTitle>جاري إنشاء الأسئلة...</CardTitle>
+                <CardDescription>
+                  يرجى الانتظار، قد تستغرق هذه العملية بعض الوقت.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Progress value={generationProgress} className="w-full" />
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  {`تم إنشاء ${generatedQuestions.length} من ${numQuestions} سؤالًا`}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {generatedQuestions.length > 0 && !isGenerating && (
             <Card>
                 <CardHeader className="flex-row items-center justify-between">
                     <div>
-                        <CardTitle>الأسئلة التي تم إنشاؤها</CardTitle>
+                        <CardTitle>الأسئلة التي تم إنشاؤها ({generatedQuestions.length})</CardTitle>
                         <CardDescription>
                           {questionType === 'interactive' ? 'أجب على الأسئلة أدناه واختبر معلوماتك.' : 'استعرض الأسئلة وإجاباتها الصحيحة.'}
                         </CardDescription>
