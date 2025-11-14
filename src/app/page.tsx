@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic, ArrowRight } from "lucide-react";
+import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -47,6 +47,12 @@ export default function Home() {
             title="تحويل الكلام إلى نص"
             description="تسجيل الصوت وتحويله إلى نص مكتوب."
             icon={<Mic className="size-8 text-primary/80" />}
+          />
+           <FeatureCard
+            href="/question-generator"
+            title="مولد الأسئلة"
+            description="إنشاء أسئلة تفاعلية وثابتة من الصور وملفات PDF."
+            icon={<FileQuestion className="size-8 text-primary/80" />}
           />
         </div>
       </div>
