@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import wav from 'wav';
 
@@ -62,7 +63,7 @@ export async function textToSpeechSimple(input: TextToSpeechSimpleInput): Promis
     const voiceName = isArabic ? 'ar-XA-Standard-A' : 'en-US-Standard-E';
 
     const { media } = await ai.generate({
-      model: ai.model('gemini-2.5-flash-preview-tts'),
+      model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
