@@ -1,5 +1,7 @@
 import type {Config} from 'tailwindcss';
 
+const { fontFamily } = require("tailwindcss/defaultTheme")
+
 export default {
   darkMode: ['class'],
   content: [
@@ -8,8 +10,19 @@ export default {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
+      backgroundImage: {
+        'grid-small-white': "url('data:image/svg+xml,%3csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" fill=\"none\" stroke=\"rgb(255 255 255 / 0.05)\"%3e%3cpath d=\"M0 .5H31.5V32\"/%3e%3c/svg%3e')",
+      },
       fontFamily: {
+        sans: ["var(--font-sans)", ...fontFamily.sans],
         body: ['Cairo', 'Inter', 'sans-serif'],
         headline: ['Cairo', 'Inter', 'sans-serif'],
         code: ['monospace'],

@@ -1,81 +1,84 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BrainCircuit, FileImage, Mic, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 transition-colors duration-500">
-      <div className="container mx-auto max-w-3xl">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 md:p-8">
+      <div className="absolute top-0 left-0 w-full h-full bg-grid-small-white/[0.2] -z-10"></div>
+      <div className="container mx-auto max-w-4xl">
         <div
-          className="text-center space-y-2 mb-10 animate-fade-in-down"
+          className="text-center space-y-4 mb-12 animate-fade-in-down"
         >
-          <h1 className="text-6xl md:text-8xl font-black text-primary tracking-tighter">
+          <div className="inline-block p-1 bg-gradient-to-r from-primary/70 via-primary to-primary/70 rounded-lg">
+             <div className="bg-background rounded-md p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-primary"><path d="M15 2H6v20h12z"/><path d="M11 1V8h6z" fill="hsl(var(--primary))"/><path d="M11 1V8h6"/><path d="M7 7h4"/><path d="M7 11h8"/><path d="M7 15h4"/></svg>
+             </div>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/70 tracking-tighter leading-none">
             Mahmoud.AI
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground/80 max-w-xl mx-auto break-words">
+          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto break-words">
             Mahmoud Mohamed Mahmoud Abo Elfetouh Ahmed El Ozairy
           </p>
         </div>
 
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-in"
-          style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}
-        >
-          <Clock />
-          <DateDisplay />
-          <Link href="/expert-assistant" className="sm:col-span-2">
-            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  مساعد الخبراء بالذكاء الاصطناعي
-                </CardTitle>
-                <BrainCircuit className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-bold">Mahmoud.AI Expert Assistant</p>
-                <p className="text-sm text-muted-foreground">
-                  طرح الأسئلة، والحصول على شروح، وتوليد الأفكار.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/image-to-pdf" className="sm:col-span-2">
-            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  تحويل الصور إلى PDF
-                </CardTitle>
-                <FileImage className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-bold">Image to PDF Converter</p>
-                <p className="text-sm text-muted-foreground">
-                  تحويل الصور إلى ملفات PDF وتلخيصها باستخدام الذكاء
-                  الاصطناعي.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/speech-to-text" className="sm:col-span-2">
-            <Card className="hover:border-primary/80 hover:shadow-lg transition-all duration-300">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  تحويل الكلام إلى نص
-                </CardTitle>
-                <Mic className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-bold">Speech to Text Converter</p>
-                <p className="text-sm text-muted-foreground">
-                  تسجيل الصوت من الميكروفون وتحويله إلى نص مكتوب.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: "0.2s", animationFillMode: "backwards" }}>
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Clock />
+            <DateDisplay />
+          </div>
+          <FeatureCard
+            href="/expert-assistant"
+            title="مساعد الخبراء بالذكاء الاصطناعي"
+            description="طرح الأسئلة، والحصول على شروح، وتوليد الأفكار."
+            icon={<BrainCircuit className="size-8 text-primary/80" />}
+          />
+          <FeatureCard
+            href="/image-to-pdf"
+            title="تحويل الصور إلى PDF"
+            description="تحويل الصور إلى ملفات PDF وتلخيصها."
+            icon={<FileImage className="size-8 text-primary/80" />}
+          />
+           <FeatureCard
+            href="/speech-to-text"
+            title="تحويل الكلام إلى نص"
+            description="تسجيل الصوت وتحويله إلى نص مكتوب."
+            icon={<Mic className="size-8 text-primary/80" />}
+          />
         </div>
       </div>
     </main>
   );
+}
+
+type FeatureCardProps = {
+  href: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+function FeatureCard({ href, title, description, icon }: FeatureCardProps) {
+  return (
+     <Link href={href} className="group">
+      <Card className="h-full bg-white/5 border-white/10 hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20">
+        <CardHeader>
+          {icon}
+          <CardTitle className="text-lg font-bold text-foreground/90 mt-4">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </CardContent>
+        <div className="p-6 pt-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary/90 group-hover:text-primary transition-colors">
+            <span>ابدأ الآن</span>
+            <ArrowRight className="size-4 transform group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+      </Card>
+    </Link>
+  )
 }
