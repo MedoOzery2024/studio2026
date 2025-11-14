@@ -37,23 +37,32 @@ export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
     const { fileDataUri, numQuestions, difficulty, questionType } = input;
     
-    const textPrompt = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
+    // Base prompt
+    let promptText = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
-The question type is '${questionType}'.
-For each question, provide:
+The entire response must be in the same language as the provided document (Arabic or English).`;
+
+    // Add instructions based on question type
+    if (questionType === 'fixed') {
+        promptText += `\nFor each question, provide:
 1. The question text.
 2. An array of 4 distinct options. The options should be labeled A, B, C, D if the content is in English, or أ, ب, ج, د if in Arabic.
 3. The correct answer.
-4. A brief explanation for the correct answer.
+4. A brief explanation for the correct answer.`;
+    } else { // interactive
+        promptText += `\nFor each question, provide:
+1. The question text.
+2. An array of 4 distinct options.
+3. The correct answer.
+4. A very brief explanation for the correct answer (will be shown after the user answers).`;
+    }
 
-The entire response must be in the same language as the provided document (Arabic or English).
-
-Content to analyze is attached.`;
+    promptText += "\n\nContent to analyze is attached.";
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
       prompt: [
-        { text: textPrompt },
+        { text: promptText },
         { media: { url: fileDataUri } }
       ],
       output: {
