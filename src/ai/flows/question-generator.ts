@@ -41,21 +41,15 @@ export async function generateQuestions(input: GenerateQuestionsInput): Promise<
     
     let promptText = `Based on the provided content, generate ${numQuestions} multiple-choice questions.
 The difficulty level should be ${difficulty}.
-The entire response must be in the same language as the provided document (Arabic or English).`;
+The entire response must be in the same language as the provided document (Arabic or English).
 
-    if (questionType === 'fixed') {
-        promptText += `\nFor each question, provide:
-1. The question text.
-2. An array of 4 distinct options. The options should be labeled A, B, C, D if the content is in English, or أ, ب, ج, د if in Arabic.
-3. The correct answer.
-4. A brief explanation for the correct answer.`;
-    } else { // interactive
-        promptText += `\nFor each question, provide:
+For each question, provide:
 1. The question text.
 2. An array of 4 distinct options.
-3. The correct answer.
-4. A very brief explanation for the correct answer (will be shown after the user answers).`;
-    }
+3. The correct answer from the options.
+4. A brief explanation for the correct answer.
+If the content is in English, options should be labeled A, B, C, D. If in Arabic, use أ, ب, ج, د.`;
+
 
     const response = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
