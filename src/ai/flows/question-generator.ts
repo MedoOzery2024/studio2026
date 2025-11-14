@@ -16,6 +16,8 @@ const QuestionSchema = z.object({
   correctAnswer: z.string().describe('The correct answer from the options.'),
   explanation: z.string().describe('An explanation for why the answer is correct.'),
 });
+export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
+
 
 const GenerateQuestionsInputSchema = z.object({
   fileDataUri: z.string().describe(
@@ -31,7 +33,6 @@ const GenerateQuestionsOutputSchema = z.object({
   questions: z.array(QuestionSchema).describe('The array of generated questions.'),
 });
 export type GenerateQuestionsOutput = z.infer<typeof GenerateQuestionsOutputSchema>;
-export type GeneratedQuestion = z.infer<typeof QuestionSchema>;
 
 
 export async function generateQuestions(input: GenerateQuestionsInput): Promise<GenerateQuestionsOutput> {
