@@ -9,3 +9,4 @@ import './flows/text-to-speech-simple';
 import './flows/chart-analyzer';
 import './flows/content-to-ppt';
 import './flows/video-generator';
+import './flows/document-summarizer';

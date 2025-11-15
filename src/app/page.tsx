@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { DateDisplay } from "@/components/date-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines, BarChart3, Presentation, Copy, Video } from "lucide-react";
+import { BrainCircuit, FileImage, Mic, ArrowRight, FileQuestion, Brain, AudioLines, BarChart3, Presentation, Copy, Video, FileText } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -38,8 +38,8 @@ export default function Home() {
           />
           <FeatureCard
             href="/image-to-pdf"
-            title="تحويل الصور إلى PDF"
-            description="تحويل الصور إلى ملفات PDF وتلخيصها."
+            title="تحويل الصور إلى ملف PDF"
+            description="دمج عدة صور في ملف PDF واحد قابل للتنزيل."
             icon={<FileImage className="size-8 text-primary/80" />}
           />
            <FeatureCard
@@ -89,6 +89,12 @@ export default function Home() {
             title="منشئ الفيديو التعليمي"
             description="تحويل النصوص والمستندات إلى فيديوهات تعليمية."
             icon={<Video className="size-8 text-primary/80" />}
+          />
+           <FeatureCard
+            href="/document-summarizer"
+            title="ملخص المستندات"
+            description="تلخيص محتوى ملفات PDF."
+            icon={<FileText className="size-8 text-primary/80" />}
           />
         </div>
       </div>
