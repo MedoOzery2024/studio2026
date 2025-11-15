@@ -53,27 +53,30 @@ export default function QuestionGeneratorPage() {
   // Interactive state
   const [answers, setAnswers] = useState<AnswerState[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [isTestStarted, setIsTestStarted] = useState(false);
+  const [isTestActive, setIsTestActive] = useState(false);
 
   useEffect(() => {
-    if (isTestStarted && remainingTime > 0 && !showResults) {
-      const id = setInterval(() => {
-        setRemainingTime(prev => prev - 1);
+    let intervalId: NodeJS.Timeout | null = null;
+    if (isTestActive && remainingTime > 0) {
+      intervalId = setInterval(() => {
+        setRemainingTime((prev) => prev - 1);
       }, 1000);
-      setTimerId(id);
-    } else if (remainingTime === 0 && isTestStarted) {
-      if (timerId) clearInterval(timerId);
+    } else if (isTestActive && remainingTime === 0) {
+      setIsTestActive(false);
       setShowResults(true);
       toast({
         title: "انتهى الوقت!",
         description: "تم عرض نتائج الاختبار.",
       });
     }
-
+  
     return () => {
-      if (timerId) clearInterval(timerId);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
-  }, [isTestStarted, remainingTime, showResults, timerId, toast]);
+  }, [isTestActive, remainingTime, toast]);
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -85,7 +88,7 @@ export default function QuestionGeneratorPage() {
         setError(null);
         setAnswers([]);
         setShowResults(false);
-        setIsTestStarted(false);
+        setIsTestActive(false);
         if(timerId) clearInterval(timerId);
       } else {
         toast({
@@ -112,9 +115,9 @@ export default function QuestionGeneratorPage() {
     setGeneratedQuestions([]);
     setAnswers([]);
     setShowResults(false);
-    setIsTestStarted(false);
+    setIsTestActive(false);
     setGenerationProgress(0);
-     if(timerId) clearInterval(timerId);
+    if (timerId) clearInterval(timerId);
     
     try {
       const base64Data = await new Promise<string>((resolve, reject) => {
@@ -149,8 +152,9 @@ export default function QuestionGeneratorPage() {
         }
       }
 
-      setGeneratedQuestions(allQuestions.slice(0, numQuestions)); // Ensure exact number of questions
-      setAnswers(Array(allQuestions.slice(0, numQuestions).length).fill({ selectedOption: null, isCorrect: null }));
+      const finalQuestions = allQuestions.slice(0, numQuestions);
+      setGeneratedQuestions(finalQuestions); // Ensure exact number of questions
+      setAnswers(Array(finalQuestions.length).fill({ selectedOption: null, isCorrect: null }));
       toast({
         title: 'تم إنشاء الأسئلة بنجاح!',
       });
@@ -158,7 +162,9 @@ export default function QuestionGeneratorPage() {
       if(questionType === 'interactive'){
         const totalSeconds = timerSettings.hours * 3600 + timerSettings.minutes * 60 + timerSettings.seconds;
         setRemainingTime(totalSeconds);
-        setIsTestStarted(true);
+        if (totalSeconds > 0) {
+            setIsTestActive(true);
+        }
       }
 
     } catch (e: any) {
@@ -200,6 +206,11 @@ export default function QuestionGeneratorPage() {
     window.print();
   };
   
+  const handleSubmitTest = () => {
+    setShowResults(true);
+    setIsTestActive(false);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4 print:hidden">
@@ -369,7 +380,7 @@ export default function QuestionGeneratorPage() {
                         </Button>
                      )}
                 </CardHeader>
-                 {isTestStarted && !showResults && (
+                 {isTestActive && (
                     <div className="p-4 border-t text-center">
                         <p className="text-lg font-bold text-primary tabular-nums">{formatTime(remainingTime)}</p>
                         <p className="text-sm text-muted-foreground">الوقت المتبقي</p>
@@ -455,24 +466,23 @@ export default function QuestionGeneratorPage() {
                     ))}
                 </CardContent>
                 {questionType === 'interactive' && (
-                   <CardFooter className="flex-col items-stretch gap-4 print:hidden">
-                     {showResults && (
-                       <Alert variant="default" className="border-primary">
-                          <BrainCircuit className="h-4 w-4" />
-                          <AlertTitle>نتيجتك النهائية</AlertTitle>
-                          <AlertDescription>
-                            لقد حصلت على {calculateScore()} من {generatedQuestions.length} إجابات صحيحة.
-                          </AlertDescription>
-                       </Alert>
-                     )}
-                     <Button size="lg" onClick={() => setShowResults(!showResults)}>
-                       {showResults ? 'إخفاء النتائج' : 'إظهار النتائج'}
-                     </Button>
-                   </CardFooter>
+                    <CardFooter className='flex-col items-stretch gap-4'>
+                        {!showResults ? (
+                            <Button size="lg" className='w-full' onClick={handleSubmitTest}>
+                                إظهار النتائج
+                            </Button>
+                        ) : (
+                            <div className='p-6 border rounded-lg bg-muted/50 w-full'>
+                                <h3 className='text-xl font-bold text-center mb-4'>النتيجة النهائية</h3>
+                                <p className='text-4xl font-bold text-center text-primary'>
+                                    {calculateScore()} / {generatedQuestions.length}
+                                </p>
+                            </div>
+                        )}
+                    </CardFooter>
                 )}
             </Card>
           )}
-
         </div>
       </main>
     </div>
