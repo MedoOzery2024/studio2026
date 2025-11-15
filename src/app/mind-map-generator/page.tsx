@@ -236,10 +236,6 @@ export default function MindMapGeneratorPage() {
                     </div>
                 </CardContent>
                 <CardFooter className="flex gap-4">
-                  <Button variant="outline" disabled>
-                    <Download className="ml-2 h-4 w-4" />
-                    تصدير كـ PDF (قريباً)
-                  </Button>
                   <Button variant="outline" onClick={exportToPptx}>
                     <Download className="ml-2 h-4 w-4" />
                     تصدير كـ PowerPoint
