@@ -80,7 +80,8 @@ export default function ContentToPptPage() {
         const titleSlide = pptx.addSlide();
         titleSlide.addText(presentationData.title, { 
             x: 0.5, y: 2, w: '90%', h: 1.5, 
-            align: 'center', fontSize: 36, bold: true, color: '363636' 
+            align: 'center', fontSize: 36, bold: true, color: '363636',
+            fontFace: 'Cairo'
         });
 
         // Content Slides
@@ -88,15 +89,16 @@ export default function ContentToPptPage() {
             const slide = pptx.addSlide();
             slide.addText(slideData.title, { 
                 x: 0.5, y: 0.25, w: '90%', h: 0.75, 
-                align: 'right', fontSize: 28, bold: true, color: '000000' 
+                align: 'right', fontSize: 28, bold: true, color: '000000',
+                fontFace: 'Cairo'
             });
             
-            const contentPoints = slideData.points.map(point => ({ text: point }));
+            const contentPoints = slideData.points.map(point => ({ text: point, options: { fontFace: 'Cairo' } }));
             
             if (contentPoints.length > 0) {
                 slide.addText(contentPoints, { 
                     x: 0.5, y: 1.2, w: '90%', h: 4, 
-                    align: 'right', fontSize: 18, bullet: true, color: '363636' 
+                    align: 'right', fontSize: 18, bullet: true, color: '363636'
                 });
             }
         });
@@ -105,7 +107,8 @@ export default function ContentToPptPage() {
         const thankYouSlide = pptx.addSlide();
         thankYouSlide.addText("شكراً لكم", {
             x: 0, y: 0, w: '100%', h: '100%',
-            align: 'center', valign: 'middle', fontSize: 48, bold: true, color: '363636'
+            align: 'center', valign: 'middle', fontSize: 48, bold: true, color: '363636',
+            fontFace: 'Cairo'
         });
 
         await pptx.writeFile({ fileName: `${outputFileName.trim() || 'presentation'}.pptx` });

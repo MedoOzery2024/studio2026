@@ -19,8 +19,6 @@ import { generateMindMap, GenerateMindMapInput, MindMapNode } from '@/ai/flows/m
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import PptxGenJS from 'pptxgenjs';
-import { font } from '../chart-analyzer/font';
-
 
 // Recursive component to render the mind map
 const MindMapNodeComponent = ({ node, level }: { node: MindMapNode, level: number }) => {
@@ -160,9 +158,8 @@ export default function MindMapGeneratorPage() {
     if (!generatedMindMap) return;
 
     const doc = new jsPDF();
-    doc.addFileToVFS('Cairo-Regular-normal.ttf', font);
-    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
-    doc.setFont('Cairo-Regular');
+    doc.addFont('Cairo', 'Cairo', 'normal');
+    doc.setFont('Cairo');
     
     doc.setR2L(true);
 

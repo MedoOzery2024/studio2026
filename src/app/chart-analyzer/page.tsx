@@ -26,7 +26,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeChart, AnalyzeChartInput, AnalyzeChartOutput } from '@/ai/flows/chart-analyzer';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { font } from './font'; // Import the font
 import PptxGenJS from 'pptxgenjs';
 
 
@@ -125,10 +124,8 @@ export default function ChartAnalyzerPage() {
 
     const doc = new jsPDF() as jsPDFWithAutoTable;
 
-    // Add the custom font
-    doc.addFileToVFS('Cairo-Regular-normal.ttf', font);
-    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
-    doc.setFont('Cairo-Regular');
+    doc.addFont('Cairo', 'Cairo', 'normal');
+    doc.setFont('Cairo');
     
     // jsPDF does not handle RTL text wrapping well, so we split it manually
     const wrapText = (text: string, maxWidth: number) => {
@@ -168,7 +165,7 @@ export default function ChartAnalyzerPage() {
         body: analysisResult.table.rows.map(row => [...row].reverse()),
         theme: 'grid',
         styles: {
-            font: 'Cairo-Regular',
+            font: 'Cairo',
             halign: 'right',
         },
         headStyles: {
@@ -191,34 +188,40 @@ export default function ChartAnalyzerPage() {
     const titleSlide = pptx.addSlide();
     titleSlide.addText(analysisResult.title, { 
         x: 0, y: 1, w: '100%', h: 1.5, 
-        align: 'center', fontSize: 32, bold: true, color: '363636' 
+        align: 'center', fontSize: 32, bold: true, color: '363636',
+        fontFace: 'Cairo'
     });
     titleSlide.addText('تحليل بواسطة Mahmoud.AI', {
         x: 0, y: 4, w: '100%', h: 1,
-        align: 'center', fontSize: 18, color: '7F7F7F'
+        align: 'center', fontSize: 18, color: '7F7F7F',
+        fontFace: 'Cairo'
     });
 
     // Summary Slide
     const summarySlide = pptx.addSlide();
     summarySlide.addText('ملخص التحليل', { 
         x: 0.5, y: 0.25, w: '90%', h: 0.75, 
-        align: 'right', fontSize: 24, bold: true, color: '363636' 
+        align: 'right', fontSize: 24, bold: true, color: '363636',
+        fontFace: 'Cairo'
     });
     summarySlide.addText(analysisResult.summary, {
         x: 0.5, y: 1.1, w: '90%', h: 4,
         align: 'right', fontSize: 16, color: '494949',
+        fontFace: 'Cairo'
     });
 
     // Table Slide
     const tableSlide = pptx.addSlide();
     tableSlide.addText('جدول البيانات', { 
         x: 0.5, y: 0.25, w: '90%', h: 0.75, 
-        align: 'right', fontSize: 24, bold: true, color: '363636' 
+        align: 'right', fontSize: 24, bold: true, color: '363636',
+        fontFace: 'Cairo'
     });
     
     // pptxgenjs tables do not directly support RTL text in the same way, we can align text right
-    const tableHeaders = analysisResult.table.headers.map(header => ({ text: header, options: { bold: true } }));
-    const tableRows = analysisResult.table.rows;
+    const tableHeaders = analysisResult.table.headers.map(header => ({ text: header, options: { bold: true, fontFace: 'Cairo' } }));
+    const tableRows = analysisResult.table.rows.map(row => row.map(cell => ({text: cell, options: {fontFace: 'Cairo'}})));
+
 
     tableSlide.addTable(tableRows, {
         x: 0.5, y: 1.1, w: '90%',

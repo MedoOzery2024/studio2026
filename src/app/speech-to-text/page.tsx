@@ -26,7 +26,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { speechToTextAndSummarize, SpeechToTextAndSummarizeInput } from '@/ai/flows/speech';
 import jsPDF from 'jspdf';
-import { font } from '../chart-analyzer/font';
 
 export default function SpeechToTextPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -166,9 +165,8 @@ export default function SpeechToTextPage() {
 
   const exportAsPdf = () => {
     const doc = new jsPDF();
-    doc.addFileToVFS('Cairo-Regular-normal.ttf', font);
-    doc.addFont('Cairo-Regular-normal.ttf', 'Cairo-Regular', 'normal');
-    doc.setFont('Cairo-Regular');
+    doc.addFont('Cairo', 'Cairo', 'normal');
+    doc.setFont('Cairo');
     
     doc.text("النص المستخرج:", 20, 20);
     doc.text(doc.splitTextToSize(transcribedText, 170), 20, 30);
