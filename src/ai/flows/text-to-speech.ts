@@ -9,7 +9,7 @@ import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 
-// Input and Output schemas are now defined inside the function
+// Input and Output types are now defined inside the function
 // to comply with Next.js Server Action conventions.
 
 export type TextToSpeechInput = {
