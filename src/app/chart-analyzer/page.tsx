@@ -102,7 +102,14 @@ export default function ChartAnalyzerPage() {
        }
     } catch(e: any) {
         console.error("Error analyzing chart:", e);
-        setError(e.message || 'حدث خطأ غير متوقع أثناء تحليل الرسم البياني.');
+        const errorMessage = e.message || 'حدث خطأ غير متوقع أثناء تحليل الرسم البياني.';
+        
+        if (errorMessage.includes('overloaded') || errorMessage.includes('503')) {
+          setError('نموذج الذكاء الاصطناعي مشغول حاليًا. يرجى المحاولة مرة أخرى بعد لحظات قليلة.');
+        } else {
+          setError(errorMessage);
+        }
+
         toast({
             variant: 'destructive',
             title: 'فشل التحليل',
