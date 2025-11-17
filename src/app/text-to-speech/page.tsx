@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, AudioLines, User, Wrench, Loader2, AlertCircle, Download, CornerDownLeft } from 'lucide-react';
+import { Upload, FileUp, Settings, AudioLines, User, Bot, Loader2, AlertCircle, Download, CornerDownLeft, Play, Pause, Trash2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -34,6 +34,8 @@ export default function TextToSpeechPage() {
   const [generatedAudio, setGeneratedAudio] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -52,6 +54,16 @@ export default function TextToSpeechPage() {
       }
     }
   };
+  
+  const clearFile = () => {
+    setFile(null);
+    setFileName('');
+    setGeneratedAudio(null);
+    setError(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  }
 
   const handleGenerateClick = async () => {
     if (!file) {
@@ -107,7 +119,7 @@ export default function TextToSpeechPage() {
     }
   };
   
-    const handleDownload = () => {
+  const handleDownload = () => {
     if (!generatedAudio) return;
     const a = document.createElement('a');
     a.href = generatedAudio;
@@ -116,7 +128,19 @@ export default function TextToSpeechPage() {
     a.click();
     document.body.removeChild(a);
   };
-  
+
+  const togglePlayPause = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
@@ -130,36 +154,46 @@ export default function TextToSpeechPage() {
       <main className="flex-1 p-4 md:p-8">
         <div className="mx-auto max-w-4xl space-y-8">
           
-          <Card
-            className="border-2 border-dashed border-muted-foreground/50 hover:border-primary transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer">
-              <Upload className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 font-semibold">
-                انقر أو اسحب صورة أو ملف PDF هنا
-              </p>
-              <p className="text-sm text-muted-foreground">
-                سيتم استخراج النص وتحويله إلى كلام.
-              </p>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,application/pdf"
-                className="hidden"
-                onChange={handleFileSelect}
-                disabled={isGenerating}
-              />
-            </CardContent>
-             {fileName && (
-              <CardFooter className='border-t p-4'>
-                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                    <FileUp className='size-5'/>
-                    <span>{fileName}</span>
-                </div>
-              </CardFooter>
-            )}
-          </Card>
+          {!file ? (
+             <Card
+              className="border-2 border-dashed border-muted-foreground/50 hover:border-primary transition-colors"
+              onClick={() => !isGenerating && fileInputRef.current?.click()}
+             >
+                <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer">
+                  <Upload className="h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 font-semibold">
+                    انقر أو اسحب صورة أو ملف PDF هنا
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    سيتم استخراج النص وتحويله إلى كلام.
+                  </p>
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                    disabled={isGenerating}
+                  />
+                </CardContent>
+             </Card>
+          ) : (
+            <Card>
+                <CardHeader>
+                    <CardTitle>الملف المحدد</CardTitle>
+                </CardHeader>
+                <CardContent className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3 text-sm'>
+                        <FileUp className='size-6 text-primary'/>
+                        <span className='font-medium'>{fileName}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={clearFile} disabled={isGenerating}>
+                        <Trash2 className="size-5 text-destructive"/>
+                    </Button>
+                </CardContent>
+            </Card>
+          )}
+
 
           <Card>
             <CardHeader>
@@ -180,15 +214,19 @@ export default function TextToSpeechPage() {
                   className="flex gap-4"
                   disabled={isGenerating}
                 >
-                  <Label htmlFor="female" className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                  <Label htmlFor="female" className="flex flex-1 items-center gap-3 cursor-pointer p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                     <RadioGroupItem value="female" id="female" />
-                    <Wrench className="size-5" />
-                    <span>صوت امرأة</span>
+                    <div className='flex items-center gap-2'>
+                        <Bot className="size-6" />
+                        <span>صوت امرأة (افتراضي)</span>
+                    </div>
                   </Label>
-                   <Label htmlFor="male" className="flex items-center gap-2 cursor-pointer p-3 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                   <Label htmlFor="male" className="flex flex-1 items-center gap-3 cursor-pointer p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                     <RadioGroupItem value="male" id="male" />
-                     <User className="size-5" />
-                    <span>صوت رجل</span>
+                    <div className='flex items-center gap-2'>
+                        <User className="size-6" />
+                        <span>صوت رجل</span>
+                    </div>
                   </Label>
                 </RadioGroup>
               </div>
@@ -239,10 +277,20 @@ export default function TextToSpeechPage() {
                     <CardDescription>يمكنك الاستماع إلى الملف الصوتي الذي تم إنشاؤه أو تنزيله.</CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-4 border-t pt-6'>
-                    <audio controls className="w-full">
-                        <source src={generatedAudio} type="audio/wav" />
-                        متصفحك لا يدعم عنصر الصوت.
-                    </audio>
+                    <div className='flex items-center gap-4 bg-muted p-4 rounded-lg'>
+                        <Button size="icon" onClick={togglePlayPause}>
+                           {isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}
+                        </Button>
+                        <div className="flex-1 text-center font-semibold">استمع الآن</div>
+                        <audio
+                            ref={audioRef}
+                            src={generatedAudio}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onEnded={() => setIsPlaying(false)}
+                            className="hidden"
+                        />
+                    </div>
                 </CardContent>
                 <CardFooter>
                      <Button onClick={handleDownload}>

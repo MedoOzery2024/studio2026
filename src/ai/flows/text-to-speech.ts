@@ -55,18 +55,19 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     const textResponse = await ai.generate({
       model: 'googleai/gemini-2.5-pro',
       prompt: [
-        { text: "Extract all text from the following document. Respond only with the extracted text, no additional commentary. The entire response must be in the same language as the provided document (e.g., Arabic or English)." },
+        { text: "Extract all text from the following document. Be precise and clean in your output. Respond only with the extracted text, with no additional commentary or formatting. The entire response must be in the same language as the provided document (e.g., Arabic or English)." },
         { media: { url: fileDataUri } }
       ],
     });
     const extractedText = textResponse.text;
     
-    if (!extractedText) {
-        throw new Error("Could not extract text from the document.");
+    if (!extractedText || extractedText.trim().length < 10) { // Check if the extracted text is substantial
+        throw new Error("Could not extract sufficient text from the document. Please try a different file.");
     }
     
     // 2. Convert the extracted text to speech
-    const voiceName = voice === 'male' ? 'puck' : 'rasalgethi';
+    // Using more natural-sounding voices
+    const voiceName = voice === 'male' ? 'puck' : 'gem-sapphire';
 
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
@@ -82,7 +83,7 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     });
 
     if (!media) {
-      throw new Error('No audio media returned from TTS model.');
+      throw new Error('No audio media returned from TTS model. The text might be too long or in an unsupported format.');
     }
     
     // Convert PCM to WAV
