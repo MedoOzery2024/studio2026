@@ -9,18 +9,6 @@ import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 
-// Input and Output types are now defined inside the function
-// to comply with Next.js Server Action conventions.
-
-export type TextToSpeechInput = {
-  fileDataUri: string;
-};
-
-export type TextToSpeechOutput = {
-  audioDataUri: string;
-};
-
-
 async function toWav(
   pcmData: Buffer,
   channels = 1,
@@ -48,7 +36,15 @@ async function toWav(
   });
 }
 
-export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
+export async function textToSpeech(input: { fileDataUri: string; }): Promise<{ audioDataUri: string; }> {
+    // Define types internally to comply with Next.js Server Action conventions.
+    type TextToSpeechInput = {
+      fileDataUri: string;
+    };
+    type TextToSpeechOutput = {
+      audioDataUri: string;
+    };
+
     // 1. Extract text from the document
     const { fileDataUri } = input;
     const textResponse = await ai.generate({
