@@ -23,6 +23,25 @@ type Message = {
   id: number;
   sender: 'user' | 'ai';
   text: string;
+  downloadUrl?: string;
+  downloadFilename?: string;
+};
+
+// Function to safely parse JSON from the AI response
+const tryParseJson = (text: string) => {
+    try {
+        // Find the start of the JSON object
+        const jsonStart = text.indexOf('{');
+        if (jsonStart === -1) return { isJson: false, text, data: null };
+
+        const potentialJson = text.substring(jsonStart);
+        const data = JSON.parse(potentialJson);
+        const precedingText = text.substring(0, jsonStart).trim();
+
+        return { isJson: true, text: precedingText, data };
+    } catch (e) {
+        return { isJson: false, text, data: null };
+    }
 };
 
 export default function ExpertAssistantPage() {
@@ -30,7 +49,7 @@ export default function ExpertAssistantPage() {
     {
       id: 1,
       sender: 'ai',
-      text: 'مرحباً! أنا مساعد محمود الذكي. يمكنك الآن رفع الملفات لتحليلها. كيف يمكنني مساعدتك اليوم؟',
+      text: 'مرحباً! أنا مساعد محمود الذكي بقدرات متقدمة. يمكنك الآن أن تطلب مني تحليل الرسوم البيانية، إنشاء عروض تقديمية، تحويل النصوص إلى صوت أو فيديو، والمزيد. كيف يمكنني مساعدتك اليوم؟',
     },
   ]);
   const [input, setInput] = useState('');
@@ -147,7 +166,27 @@ export default function ExpertAssistantPage() {
         fileDataUri: fileDataUri,
       });
 
-      const aiMessage: Message = { id: Date.now() + 1, sender: 'ai', text: aiResponseText };
+      const { isJson, text, data } = tryParseJson(aiResponseText);
+      const aiMessage: Message = { id: Date.now() + 1, sender: 'ai', text: text };
+      
+      if(isJson && data) {
+         if (data.audioDataUri) {
+            aiMessage.downloadUrl = data.audioDataUri;
+            aiMessage.downloadFilename = 'generated_speech.wav';
+        }
+        if (data.videoUrl) {
+            aiMessage.downloadUrl = data.videoUrl;
+            aiMessage.downloadFilename = 'generated_video.mp4';
+        }
+        if (data.slides) { // For presentations
+             aiMessage.text = `${text}\n\nتم إنشاء عرض تقديمي بعنوان "${data.title}" ويحتوي على ${data.slides.length} شريحة.`;
+        }
+        if (data.table) { // For chart analysis
+             aiMessage.text = `${text}\n\nتم تحليل الرسم البياني بنجاح. العنوان: "${data.title}". الملخص: ${data.summary}`;
+        }
+      }
+
+
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
     } catch (error) {
       console.error('Error getting AI response:', error);
@@ -219,7 +258,7 @@ export default function ExpertAssistantPage() {
       {
         id: 1,
         sender: 'ai',
-        text: 'مرحباً! أنا مساعد محمود الذكي. كيف يمكنني مساعدتك اليوم؟',
+        text: 'مرحباً! أنا مساعد محمود الذكي بقدرات متقدمة. يمكنك الآن أن تطلب مني تحليل الرسوم البيانية، إنشاء عروض تقديمية، تحويل النصوص إلى صوت أو فيديو، والمزيد. كيف يمكنني مساعدتك اليوم؟',
       },
     ]);
     setInput('');
@@ -301,6 +340,16 @@ export default function ExpertAssistantPage() {
                   </div>
                 )}
                 <p className="whitespace-pre-wrap">{message.text}</p>
+                 {message.downloadUrl && (
+                    <div className="mt-4">
+                        <a href={message.downloadUrl} download={message.downloadFilename}>
+                            <Button variant="secondary" size="sm">
+                                <Download className="ml-2 h-4 w-4" />
+                                تحميل الملف
+                            </Button>
+                        </a>
+                    </div>
+                 )}
               </div>
               {message.sender === 'user' && (
                 <Avatar className="h-9 w-9 border-2 border-border">
