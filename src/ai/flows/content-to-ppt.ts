@@ -52,7 +52,7 @@ Content to analyze is attached.`;
       output: {
         schema: GeneratePresentationOutputSchema
       },
-      model: 'googleai/gemini-2.5-pro',
+      model: 'googleai/gemini-pro',
       system: "You are an expert in summarizing documents and creating structured PowerPoint presentations."
     });
 
