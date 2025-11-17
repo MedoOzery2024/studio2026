@@ -14,7 +14,6 @@ import wav from 'wav';
 
 export type TextToSpeechInput = {
   fileDataUri: string;
-  voice: 'male' | 'female';
 };
 
 export type TextToSpeechOutput = {
@@ -51,7 +50,7 @@ async function toWav(
 
 export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
     // 1. Extract text from the document
-    const { fileDataUri, voice } = input;
+    const { fileDataUri } = input;
     const textResponse = await ai.generate({
       model: 'googleai/gemini-2.5-pro',
       prompt: [
@@ -66,8 +65,7 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     }
     
     // 2. Convert the extracted text to speech
-    // Using more natural-sounding voices
-    const voiceName = voice === 'male' ? 'puck' : 'gem-sapphire';
+    const voiceName = 'puck'; // Hardcoded to male voice as requested
 
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),

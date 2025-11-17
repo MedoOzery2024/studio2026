@@ -12,8 +12,7 @@ import {
   CardFooter,
   CardDescription,
 } from '@/components/ui/card';
-import { Upload, FileUp, Settings, AudioLines, User, Bot, Loader2, AlertCircle, Download, CornerDownLeft, Play, Pause, Trash2 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Upload, FileUp, Settings, AudioLines, Loader2, AlertCircle, Download, CornerDownLeft, Play, Pause, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -25,9 +24,6 @@ export default function TextToSpeechPage() {
   const [outputFileName, setOutputFileName] = useState('generated-speech');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  // Form state
-  const [voice, setVoice] = useState<'male' | 'female'>('female');
 
   // AI state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -87,7 +83,6 @@ export default function TextToSpeechPage() {
         
         const input: TextToSpeechInput = {
           fileDataUri: base64Data,
-          voice,
         };
 
         const result = await textToSpeech(input);
@@ -112,7 +107,7 @@ export default function TextToSpeechPage() {
       toast({
         variant: 'destructive',
         title: 'فشل الإنشاء',
-        description: 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
+        description: e.message || 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.',
       });
     } finally {
       setIsGenerating(false);
@@ -202,34 +197,10 @@ export default function TextToSpeechPage() {
                 <CardTitle>إعدادات الصوت</CardTitle>
               </div>
               <CardDescription>
-                حدد خياراتك لإنشاء ملف صوتي مخصص.
+                سيتم إنشاء الملف الصوتي باستخدام صوت رجل.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label>اختر الصوت</Label>
-                <RadioGroup 
-                  value={voice}
-                  onValueChange={(val: 'male' | 'female') => setVoice(val)}
-                  className="flex gap-4"
-                  disabled={isGenerating}
-                >
-                  <Label htmlFor="female" className="flex flex-1 items-center gap-3 cursor-pointer p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
-                    <RadioGroupItem value="female" id="female" />
-                    <div className='flex items-center gap-2'>
-                        <Bot className="size-6" />
-                        <span>صوت امرأة (افتراضي)</span>
-                    </div>
-                  </Label>
-                   <Label htmlFor="male" className="flex flex-1 items-center gap-3 cursor-pointer p-4 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
-                    <RadioGroupItem value="male" id="male" />
-                    <div className='flex items-center gap-2'>
-                        <User className="size-6" />
-                        <span>صوت رجل</span>
-                    </div>
-                  </Label>
-                </RadioGroup>
-              </div>
               <div className="space-y-2">
                   <Label htmlFor="output-filename">اسم الملف الصوتي الناتج</Label>
                   <Input 
