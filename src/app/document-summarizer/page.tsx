@@ -32,7 +32,7 @@ export default function DocumentSummarizerPage() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
-      if (selectedFile.type === 'application/pdf') {
+      if (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
         setFileName(selectedFile.name);
         setSummaryResult(null);
@@ -41,7 +41,7 @@ export default function DocumentSummarizerPage() {
         toast({
           variant: 'destructive',
           title: 'نوع ملف غير صالح',
-          description: 'الرجاء اختيار ملف PDF فقط.',
+          description: 'الرجاء اختيار ملف صورة أو PDF.',
         });
       }
     }
@@ -52,7 +52,7 @@ export default function DocumentSummarizerPage() {
       toast({
         variant: 'destructive',
         title: 'لم يتم اختيار ملف',
-        description: 'الرجاء تحميل ملف PDF أولاً.',
+        description: 'الرجاء تحميل ملف صورة أو PDF أولاً.',
       });
       return;
     }
@@ -73,18 +73,18 @@ export default function DocumentSummarizerPage() {
           if (result) {
             setSummaryResult(result);
             toast({
-              title: 'تم تلخيص المستند بنجاح!',
+              title: 'تم تلخيص المحتوى بنجاح!',
             });
           } else {
-             setError('لم يتمكن الذكاء الاصطناعي من تلخيص المستند. حاول مرة أخرى بملف مختلف.');
+             setError('لم يتمكن الذكاء الاصطناعي من تلخيص هذا المحتوى. حاول مرة أخرى بملف مختلف.');
           }
        }
        reader.onerror = () => {
          throw new Error('فشل في قراءة الملف.');
        }
     } catch(e: any) {
-        console.error("Error summarizing document:", e);
-        setError(e.message || 'حدث خطأ غير متوقع أثناء تلخيص المستند.');
+        console.error("Error summarizing content:", e);
+        setError(e.message || 'حدث خطأ غير متوقع أثناء تلخيص المحتوى.');
         toast({
             variant: 'destructive',
             title: 'فشل التلخيص',
@@ -98,7 +98,7 @@ export default function DocumentSummarizerPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background" dir="rtl">
       <header className="flex items-center justify-between border-b p-4">
-        <h1 className="text-xl font-bold text-primary">ملخص المستندات</h1>
+        <h1 className="text-xl font-bold text-primary">ملخص المحتوى</h1>
          <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
           <CornerDownLeft className="h-5 w-5" />
           <span className="sr-only">العودة</span>
@@ -115,7 +115,7 @@ export default function DocumentSummarizerPage() {
             <CardContent className="flex flex-col items-center justify-center p-12 text-center cursor-pointer">
               <Upload className="h-12 w-12 text-muted-foreground" />
               <p className="mt-4 font-semibold">
-                انقر أو اسحب ملف PDF هنا
+                انقر أو اسحب ملف صورة أو PDF هنا
               </p>
               <p className="text-sm text-muted-foreground">
                 سيتم تلخيص محتوى الملف.
@@ -123,7 +123,7 @@ export default function DocumentSummarizerPage() {
               <Input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept="image/*,application/pdf"
                 className="hidden"
                 onChange={handleFileSelect}
                 disabled={isSummarizing}
@@ -141,9 +141,9 @@ export default function DocumentSummarizerPage() {
 
           <Card>
              <CardHeader>
-                <CardTitle>تلخيص المستند</CardTitle>
+                <CardTitle>تلخيص المحتوى</CardTitle>
                 <CardDescription>
-                  اضغط على الزر أدناه لبدء تلخيص ملف PDF الذي تم تحميله.
+                  اضغط على الزر أدناه لبدء تلخيص الملف الذي تم تحميله.
                 </CardDescription>
              </CardHeader>
             <CardFooter>
@@ -169,7 +169,7 @@ export default function DocumentSummarizerPage() {
                 <CardContent className="p-6 text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <p className="text-lg">يقوم الذكاء الاصطناعي بقراءة وتلخيص المستند...</p>
+                    <p className="text-lg">يقوم الذكاء الاصطناعي بقراءة وتلخيص المحتوى...</p>
                   </div>
                 </CardContent>
             </Card>
@@ -179,7 +179,7 @@ export default function DocumentSummarizerPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>الملخص</CardTitle>
-                    <CardDescription>هذا هو ملخص المستند الذي تم إنشاؤه.</CardDescription>
+                    <CardDescription>هذا هو ملخص المحتوى الذي تم إنشاؤه.</CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-6 border-t pt-6'>
                     <Textarea

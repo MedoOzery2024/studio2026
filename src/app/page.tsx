@@ -92,8 +92,8 @@ export default function Home() {
           />
            <FeatureCard
             href="/document-summarizer"
-            title="ملخص المستندات"
-            description="تلخيص محتوى ملفات PDF."
+            title="ملخص المحتوى"
+            description="تلخيص محتوى الصور وملفات PDF."
             icon={<FileText className="size-8 text-primary/80" />}
           />
         </div>

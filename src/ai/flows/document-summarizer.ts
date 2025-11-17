@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview A flow for summarizing PDF documents.
+ * @fileOverview A flow for summarizing documents (PDF) or images.
  *
- * - summarizeDocument - A function that handles the document summarization process.
+ * - summarizeDocument - A function that handles the document/image summarization process.
  * - SummarizeDocumentInput - The input type for the function.
  * - SummarizeDocumentOutput - The return type for the function.
  */
@@ -20,13 +20,13 @@ export type SummarizeDocumentOutput = {
 
 export async function summarizeDocument(input: SummarizeDocumentInput): Promise<SummarizeDocumentOutput> {
   const SummarizeDocumentOutputSchema = z.object({
-    summary: z.string().describe('A concise summary of the document content. The summary must be in the same language as the document (e.g., Arabic or English).'),
+    summary: z.string().describe('A concise summary of the document/image content. The summary must be in the same language as the content (e.g., Arabic or English).'),
   });
   
   const { fileDataUri } = input;
   
-  const prompt = `Please provide a concise summary for the following document.
-The summary must be in the same language as the document itself.
+  const prompt = `Please provide a concise summary for the following content.
+The summary must be in the same language as the content itself.
 
 Content to analyze is attached.`;
 
@@ -39,7 +39,7 @@ Content to analyze is attached.`;
       schema: SummarizeDocumentOutputSchema
     },
     model: 'googleai/gemini-2.5-pro',
-    system: "You are an expert at reading documents and providing concise summaries."
+    system: "You are an expert at reading documents and images and providing concise summaries."
   });
   
   const output = response.output;
