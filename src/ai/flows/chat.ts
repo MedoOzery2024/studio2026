@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import { Message, Role, Part} from 'genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { generatePresentation } from './content-to-ppt';
 import { analyzeChart } from './chart-analyzer';
 import { textToSpeech } from './text-to-speech';
@@ -111,7 +111,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 - You can generate and correct code.
 - If the user asks you to perform a specific task like creating a presentation, analyzing a chart, converting text to speech, creating a video, or summarizing a document, you MUST use the provided tools.
 - When a tool is used, inform the user that the task is complete and provide them with the result (e.g., download link, analysis data). If a tool returns a file (like audio or video), tell the user the file is ready to be downloaded.
-- If a file is provided with a general question, your response must be based on its content.`
+- If a file (image or PDF) is provided with a general question, you MUST analyze the content of that file and base your entire response on it. Do not answer from general knowledge if a file is present.`
     });
     
     // Handle tool calls
