@@ -53,7 +53,7 @@ Content to analyze is attached.`;
     output: {
       schema: AnalyzeChartOutputSchema
     },
-    model: 'googleai/gemini-pro',
+    model: 'googleai/gemini-2.5-pro',
     system: "You are an expert data analyst specializing in extracting structured data from charts and graphs."
   });
 

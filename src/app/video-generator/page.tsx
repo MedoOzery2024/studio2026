@@ -189,7 +189,7 @@ export default function VideoGeneratorPage() {
                       <div className='flex items-center gap-4'>
                         <Slider
                             id="duration"
-                            min={2} max={8} step={1}
+                            min={5} max={8} step={1}
                             value={duration}
                             onValueChange={setDuration}
                             disabled={isGenerating}

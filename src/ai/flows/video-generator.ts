@@ -36,7 +36,7 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
          promptParts.push({ media: { url: fileDataUri, contentType: mimeType } });
       } else {
         const textResponse = await ai.generate({
-          model: 'gemini-pro',
+          model: 'googleai/gemini-2.5-pro',
           prompt: [
             { text: "Extract all text from the following document. Respond only with the extracted text." },
             { media: { url: fileDataUri } }
